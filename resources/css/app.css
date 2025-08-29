@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==== Theme v0 (migrasi dari <style> di layout) ==== */
+:root { --radius: 12px; }
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid transparent; box-shadow: 0 0 0 3px rgba(14,165,233,.35);
+  border-color: #0ea5e9 !important; border-radius: var(--radius);
+}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.55rem .9rem;border-radius:var(--radius);font-size:.875rem;line-height:1.15;}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn-primary{background:#111827;color:#fff;border:1px solid #111827}
+.btn-primary:hover{filter:brightness(1.05)}
+.btn-brand{background:#0ea5e9;color:#fff;border:1px solid #0ea5e9}
+.btn-brand:hover{background:#0b7db3;border-color:#0b7db3}
+.btn-outline{background:#fff;color:#111;border:1px solid #e5e7eb}
+.btn-outline:hover{background:#f9fafb}
+.btn-danger{background:#ef4444;color:#fff;border:1px solid #ef4444}
+.btn-ghost{background:transparent;color:#111;border:1px solid transparent}
+.btn-block{width:100%}
+.field{border:1px solid #e5e7eb;border-radius:var(--radius);padding:.55rem .75rem;width:100%;font-size:.95rem;background:#fff}
+.field[disabled]{background:#f3f4f6;color:#6b7280}
+.hint{font-size:.75rem;color:#6b7280}
+.error{font-size:.8rem;color:#dc2626;margin-top:.25rem}
+.card{background:#fff;padding:1rem;border-radius:var(--radius);box-shadow:0 6px 20px rgba(0,0,0,.05)}
+.table th,.table td{padding:.6rem .5rem}
+.table thead tr{border-bottom:1px solid #e5e7eb}
+.table tbody tr{border-bottom:1px solid #f1f5f9}
+.table tbody tr:hover{background:#f9fafb}
+.table .truncate{max-width:280px}
+.chip{display:inline-block;border-radius:999px;font-size:.72rem;padding:.22rem .6rem;border:1px solid transparent}
+.st-OPEN{background:#eef2ff;color:#3730a3;border-color:#c7d2fe}
+.st-ASSIGNED{background:#f0f9ff;color:#075985;border-color:#bae6fd}
+.st-IN_PROGRESS{background:#ecfeff;color:#155e75;border-color:#a5f3fc}
+.st-PENDING{background:#fff7ed;color:#9a3412;border-color:#fed7aa}
+.st-RESOLVED{background:#ecfdf5;color:#065f46;border-color:#bbf7d0}
+.st-CLOSED{background:#f3f4f6;color:#374151;border-color:#e5e7eb}
+.ug-RENDAH{background:#f3f4f6;color:#374151;border-color:#e5e7eb}
+.ug-SEDANG{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
+.ug-TINGGI{background:#fff1f2;color:#be123c;border-color:#fecdd3}
+.ug-DARURAT{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+.stack{display:grid;gap:.75rem}
+.stack-lg{display:grid;gap:1rem}
+.bar{display:flex;align-items:center;justify-content:space-between}
+/* ====== TONES: bantu warna manusiawi ====== */
+/* Tone dasar */
+.tone-ok     { background:#ecfdf5; color:#065f46; border:1px solid #bbf7d0; }
+.tone-warn   { background:#fff7ed; color:#9a3412; border:1px solid #fed7aa; }
+.tone-danger { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+.tone-info   { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
+.tone-muted  { background:#f3f4f6; color:#374151; border:1px solid #e5e7eb; }
+
+/* Varian untuk kartu: lebih lembut (pakai .card + .tone-*) */
+.card.tone-ok     { background:#f0fdf4; border-color:#bbf7d0; color:#065f46; }
+.card.tone-warn   { background:#fffbeb; border-color:#fde68a; color:#92400e; }
+.card.tone-danger { background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+.card.tone-info   { background:#f0f9ff; border-color:#bae6fd; color:#1d4ed8; }
+.card.tone-muted  { background:#f8fafc; border-color:#e5e7eb; color:#374151; }
+
+/* Aksen baris (mis. list tiket): garis kiri + latar tipis saat butuh highlight */
+.row-accent { border-left-width:6px; border-radius:12px; }
+.row-accent.ok     { border-left-color:#22c55e; background:linear-gradient(90deg,#f0fdf4,transparent 60%); }
+.row-accent.warn   { border-left-color:#f59e0b; background:linear-gradient(90deg,#fffbeb,transparent 60%); }
+.row-accent.danger { border-left-color:#ef4444; background:linear-gradient(90deg,#fef2f2,transparent 60%); }
+.row-accent.info   { border-left-color:#3b82f6; background:linear-gradient(90deg,#f0f9ff,transparent 60%); }
+
+/* Mini legend chip (opsional) */
+.legend { display:inline-flex; align-items:center; gap:.4rem; font-size:.78rem; color:#6b7280 }
+.legend i { width:.75rem; height:.75rem; border-radius:999px; display:inline-block; }
+.legend i.ok     { background:#22c55e; }
+.legend i.warn   { background:#f59e0b; }
+.legend i.danger { background:#ef4444; }
+.legend i.info   { background:#3b82f6; }
