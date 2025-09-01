@@ -1,56 +1,69 @@
-<x-guest-layout>
-    <x-auth-card>
-        <x-slot name="logo">
-            <a href="/">
-                <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
-            </a>
-        </x-slot>
+@extends('layouts.guest')
 
-        <!-- Session Status -->
-        <x-auth-session-status class="mb-4" :status="session('status')" />
+@section('content')
+<div class="card">
+  <div class="mb-3">
+    <div class="text-lg font-semibold">Masuk</div>
+    <div class="text-sm text-gray-500">Gunakan email kantor dan kata sandi Anda.</div>
+  </div>
 
-        <!-- Validation Errors -->
-        <x-auth-validation-errors class="mb-4" :errors="$errors" />
+  <form method="POST" action="{{ route('login') }}" id="loginForm" class="stack" novalidate>
+    @csrf
 
-        <form method="POST" action="{{ route('login') }}">
-            @csrf
+    <div>
+      <label for="email" class="block text-xs text-gray-600 mb-1">Email</label>
+      <input id="email" type="email" name="email" class="field" value="{{ old('email') }}" required autofocus autocomplete="username" placeholder="nama@perusahaan.com">
+      @includeIf('partials.field-error', ['field' => 'email'])
+    </div>
 
-            <!-- Email Address -->
-            <div>
-                <x-label for="email" :value="__('Email')" />
+    <div>
+      <label for="password" class="block text-xs text-gray-600 mb-1">Kata Sandi</label>
+      <div class="relative">
+        <input id="password" type="password" name="password" class="field pr-24" required autocomplete="current-password" placeholder="••••••••">
+        <button type="button" id="togglePwd" class="btn btn-outline absolute right-1 top-1 h-[38px] px-3">Lihat</button>
+      </div>
+      @includeIf('partials.field-error', ['field' => 'password'])
+      <div class="hint mt-1">Jangan bagikan kata sandi kepada siapa pun.</div>
+    </div>
 
-                <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
-            </div>
+    <div class="flex items-center justify-between text-sm">
+      <label class="inline-flex items-center gap-2">
+        <input type="checkbox" name="remember" class="rounded" {{ old('remember') ? 'checked' : '' }}>
+        Ingat saya
+      </label>
+      @if (Route::has('password.request'))
+        <a class="underline" href="{{ route('password.request') }}">Lupa kata sandi?</a>
+      @endif
+    </div>
 
-            <!-- Password -->
-            <div class="mt-4">
-                <x-label for="password" :value="__('Password')" />
+    <div class="grid gap-2">
+      <button type="submit" class="btn btn-brand btn-block">Masuk</button>
+      <a href="mailto:it@perusahaan.com" class="btn btn-outline btn-block">Butuh bantuan IT?</a>
+    </div>
+  </form>
+</div>
 
-                <x-input id="password" class="block mt-1 w-full"
-                                type="password"
-                                name="password"
-                                required autocomplete="current-password" />
-            </div>
+<div class="text-center text-xs text-gray-500 mt-3">
+  Tips: pasang aplikasi ke layar utama untuk akses cepat di ponsel.
+</div>
 
-            <!-- Remember Me -->
-            <div class="block mt-4">
-                <label for="remember_me" class="inline-flex items-center">
-                    <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" name="remember">
-                    <span class="ml-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-                </label>
-            </div>
-
-            <div class="flex items-center justify-end mt-4">
-                @if (Route::has('password.request'))
-                    <a class="underline text-sm text-gray-600 hover:text-gray-900" href="{{ route('password.request') }}">
-                        {{ __('Forgot your password?') }}
-                    </a>
-                @endif
-
-                <x-button class="ml-3">
-                    {{ __('Login') }}
-                </x-button>
-            </div>
-        </form>
-    </x-auth-card>
-</x-guest-layout>
+<script>
+  (function(){
+    const pwd = document.getElementById('password');
+    const btn = document.getElementById('togglePwd');
+    if (btn && pwd) {
+      btn.addEventListener('click', () => {
+        const is = pwd.type === 'password';
+        pwd.type = is ? 'text' : 'password';
+        btn.textContent = is ? 'Sembunyikan' : 'Lihat';
+        pwd.focus();
+      });
+    }
+    const form = document.getElementById('loginForm');
+    form?.addEventListener('submit', () => {
+      const btn = form.querySelector('button[type="submit"]');
+      if (btn) btn.disabled = true;
+    });
+  })();
+</script>
+@endsection

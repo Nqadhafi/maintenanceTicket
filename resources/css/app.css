@@ -86,3 +86,23 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
   box-shadow: 0 10px 30px rgba(0,0,0,.25);
 }
 @media (min-width: 768px) { .toast{ bottom: 1.25rem; } }
+
+.drawer { position: fixed; inset: 0; display: none; z-index: 60; }
+.drawer.active { display: block; }
+.drawer .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.35); }
+.drawer .panel {
+  position: absolute; top: 0; left: 0; height: 100%;
+  width: 80%; max-width: 320px; background: #fff; border-right: 1px solid #e5e7eb;
+  padding: 1rem; transform: translateX(-100%); transition: transform .2s ease;
+}
+.drawer.active .panel { transform: translateX(0); }
+.drawer .close { position: absolute; right: .5rem; top: .5rem; }
+/* ==== Compact Stat Cards (mobile: 1 row, small) ==== */
+.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem}
+@media (min-width:768px){.stats-grid{gap:.75rem}}
+
+.card.stat{padding:.75rem} /* lebih rapat dari .card default */
+.stat-title{font-size:.72rem;opacity:.8}
+.stat-value{font-size:1.35rem;line-height:1.2;font-weight:600}
+@media (min-width:768px){.stat-value{font-size:1.875rem}} /* md: ~text-3xl */
+.stat-hint{font-size:.72rem;opacity:.75}
