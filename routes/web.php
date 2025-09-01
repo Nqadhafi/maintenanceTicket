@@ -14,6 +14,9 @@ use App\Http\Controllers\Web\DashboardWebController;
 
 require __DIR__.'/auth.php'; // route login/logout dari Breeze (Blade)
 
+Route::view('/offline', 'offline')->name('offline');
+
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [DashboardWebController::class, 'index'])->name('home');
     Route::get('/dashboard', [DashboardWebController::class, 'index'])->name('dashboard');

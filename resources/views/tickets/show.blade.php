@@ -1,5 +1,10 @@
 @extends('layouts.app')
-
+@php
+  $breadcrumbs = [
+    ['label'=>'Tiket', 'url'=>route('tickets.index')],
+    ['label'=>'Detail']
+  ];
+@endphp
 @section('content')
 <div class="bg-white p-4 rounded-xl shadow">
   <div class="flex items-start justify-between">

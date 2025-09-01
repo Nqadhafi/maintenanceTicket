@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>{{ $title ?? 'Ticketing' }}</title>
   <link rel="stylesheet" href="{{ mix('css/app.css') }}">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0ea5e9">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
 </head>
 <body class="bg-gray-100">
 
@@ -150,6 +155,69 @@
         </ul>
       </div>
     @endif
+{{-- ===== Page Header (judul halaman + breadcrumb + actions) ===== --}}
+@php
+  $routeName = optional(request()->route())->getName();
+  $defaultTitleMap = [
+    // utama
+    'dashboard'            => 'Dashboard',
+    'tickets.index'        => 'Daftar Tiket',
+    'tickets.create'       => 'Buat Tiket',
+    'tickets.show'         => 'Detail Tiket',
+    'assets.index'         => 'Aset',
+    'reports.tickets'      => 'Laporan Tiket',
+    // admin/pengaturan
+    'settings.sla.index'   => 'Aturan Deadline',
+    'admin.users.index'    => 'Pengguna',
+    'admin.users.create'   => 'Tambah Pengguna',
+    'admin.users.edit'     => 'Ubah Pengguna',
+    'master.asset_categories.index' => 'Kategori Aset',
+    'master.locations.index'        => 'Lokasi',
+    'master.vendors.index'          => 'Vendor',
+  ];
+  // judul otomatis berdasar route, fallback ke <title> atau custom section
+  $autoTitle = $defaultTitleMap[$routeName] ?? ($title ?? null);
+  // izinkan view override via @section('page_title')
+  $pageTitle = trim($__env->yieldContent('page_title', $autoTitle));
+  $pageSubtitle = trim($__env->yieldContent('page_subtitle', ''));
+@endphp
+
+@if($pageTitle)
+  <div class="card mb-3">
+    <div class="bar">
+      <div>
+        <h1 class="text-lg font-semibold">{{ $pageTitle }}</h1>
+        @if($pageSubtitle)
+          <div class="text-sm text-gray-500 mt-0.5">{{ $pageSubtitle }}</div>
+        @endif
+
+        {{-- Breadcrumb opsional: kirim $breadcrumbs = [['label'=>'Tiket','url'=>...], ['label'=>'Detail']] dari view --}}
+        @if(isset($breadcrumbs) && is_array($breadcrumbs) && count($breadcrumbs))
+          <nav class="text-xs text-gray-500 mt-2" aria-label="Breadcrumb">
+            <ol class="flex items-center gap-1 flex-wrap">
+              @foreach($breadcrumbs as $i => $b)
+                @if(!empty($b['url']) && $i < count($breadcrumbs)-1)
+                  <li><a href="{{ $b['url'] }}" class="underline">{{ $b['label'] }}</a></li>
+                  <li aria-hidden="true">›</li>
+                @else
+                  <li aria-current="page">{{ $b['label'] }}</li>
+                @endif
+              @endforeach
+            </ol>
+          </nav>
+        @endif
+      </div>
+
+      {{-- Aksi cepat opsional: @section('page_actions') ... @endsection --}}
+      @hasSection('page_actions')
+        <div class="flex items-center gap-2">
+          @yield('page_actions')
+        </div>
+      @endif
+    </div>
+  </div>
+@endif
+{{-- ===== End Page Header ===== --}}
 
     {{-- Main content --}}
     <main id="main">@yield('content')</main>
@@ -205,6 +273,28 @@
         const btn = f.querySelector('button[type="submit"],button:not([type])');
         if (btn) btn.disabled = true;
       });
+    }
+
+        if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then(reg => {
+            reg.addEventListener('updatefound', () => {
+              const nw = reg.installing;
+              nw?.addEventListener('statechange', () => {
+                if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                  const bar = document.createElement('div');
+                  bar.className = 'fixed bottom-16 left-0 right-0 mx-auto max-w-xl bg-black text-white text-sm rounded-xl shadow p-3 z-50';
+                  bar.innerHTML = 'Versi baru tersedia. <button id="swRefresh" class="btn btn-brand" style="margin-left:.5rem">Muat ulang</button>';
+                  document.body.appendChild(bar);
+                  document.getElementById('swRefresh').onclick = () => location.reload();
+                }
+              });
+            });
+          })
+          .catch(console.error);
+      });
+      navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
     }
   </script>
 </html>
