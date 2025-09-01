@@ -252,7 +252,20 @@
   </nav>
 </div>
 @endauth
+{{-- FAB: Install App --}}
+<div id="installFabWrap" class="fab-wrap hidden">
+  <button id="installFab" class="btn btn-brand">Install App</button>
+</div>
 
+{{-- Banner iOS A2HS (klik FAB di iOS akan menampilkan ini) --}}
+<div id="iosA2HS" class="hidden">
+  <div class="toast">
+    <strong>Pasang di Layar Utama</strong><br>
+    Buka menu <span aria-label="Share">Bagikan</span> → pilih <em>Tambahkan ke Layar Utama</em>.
+    <button type="button" class="btn btn-outline" style="margin-left:.5rem"
+            onclick="document.getElementById('iosA2HS').classList.add('hidden')">Tutup</button>
+  </div>
+</div>
 </body>
   {{-- JS kecil: toggle mobile, auto-hide flash, cegah double submit --}}
   <script>
@@ -296,5 +309,68 @@
       });
       navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
     }
+
+      // Helper
+  function alreadyInstalled() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+  function show(el){ el && el.classList.remove('hidden'); }
+  function hide(el){ el && el.classList.add('hidden'); }
+
+  const fabWrap = document.getElementById('installFabWrap');
+  const fabBtn  = document.getElementById('installFab');
+  const iosBar  = document.getElementById('iosA2HS');
+  let deferredPrompt = null;
+
+  const ua = navigator.userAgent.toLowerCase();
+  const isIOS = /iphone|ipad|ipod/.test(ua);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  // Android/Chrome: muncul saat eligible
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    if (alreadyInstalled()) return;
+    deferredPrompt = e;
+    show(fabWrap);
+  });
+
+  async function triggerInstall() {
+    if (alreadyInstalled()) { hide(fabWrap); return; }
+
+    // Android/Chrome path
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice.outcome === 'accepted') hide(fabWrap);
+      deferredPrompt = null;
+      return;
+    }
+
+    // iOS/Safari path: tampilkan panduan
+    if (isIOS && isSafari) {
+      show(iosBar);
+      return;
+    }
+  }
+
+  fabBtn?.addEventListener('click', triggerInstall);
+
+  // Sembunyikan jika sudah terpasang
+  window.addEventListener('appinstalled', () => {
+    hide(fabWrap);
+    const bar = document.createElement('div');
+    bar.className = 'toast';
+    bar.textContent = 'Aplikasi berhasil dipasang.';
+    document.body.appendChild(bar);
+    setTimeout(()=>bar.remove(), 2500);
+  });
+
+  // Saat load: jika iOS & belum install, tampilkan FAB agar user bisa lihat panduan
+  window.addEventListener('load', () => {
+    if (alreadyInstalled()) { hide(fabWrap); return; }
+    if (isIOS && isSafari) {
+      show(fabWrap); // FAB muncul, klik → panduan
+    }
+  });
   </script>
 </html>
