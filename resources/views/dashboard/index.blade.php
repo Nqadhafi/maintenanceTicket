@@ -1,36 +1,94 @@
 @extends('layouts.app')
 
 @section('content')
-{{-- HERO / Quick actions --}}
-<div class="card">
-  <div class="bar">
-    <div>
-      <div class="text-lg font-semibold">Ringkasan Hari Ini</div>
-      <div class="text-sm text-gray-500">Lihat sekilas kondisi tiket dan lakukan tindakan penting.</div>
-    </div>
-    @if(!empty($quick))
-      <div class="flex items-center gap-2">
-        @foreach($quick as $q)
-          <a href="{{ $q['route'] }}" class="btn {{ $q['style'] }}">{{ $q['label'] }}</a>
-        @endforeach
+@php
+  $me   = auth()->user();
+  $role = $me->role ?? 'USER';
+  $isAdmin = in_array($role, ['PJ','SUPERADMIN'], true);
+@endphp
+
+{{-- ===== MOBILE APP-LIKE HEADER ===== --}}
+<div class="md:hidden space-y-3">
+  <div class="app-hero">
+    <div class="flex items-center justify-between">
+      <div class="min-w-0">
+        <div class="text-xs subtitle">{{ $me->divisi ?? '—' }}</div>
+        <div class="font-semibold text-base truncate">{{ $me->name }}</div>
+        <div class="text-xs opacity-90">{{ $role }}</div>
       </div>
+      <div class="avatar">{{ strtoupper(mb_substr($me->name ?? 'U', 0, 1)) }}</div>
+    </div>
+
+    {{-- Stat pills geser horizontal --}}
+    <div class="mt-3 hscroll">
+      <a href="{{ route('tickets.index') }}" class="app-pill" aria-label="Lihat tiket aktif">
+        <div class="k">{{ $cards[0]['title'] ?? 'Tiket Aktif' }}</div>
+        <div class="v">{{ $cards[0]['value'] ?? 0 }}</div>
+      </a>
+      <a href="{{ route('reports.tickets') }}" class="app-pill" aria-label="Lihat tiket lewat deadline">
+        <div class="k">{{ $cards[1]['title'] ?? 'Lewat Deadline' }}</div>
+        <div class="v">{{ $cards[1]['value'] ?? 0 }}</div>
+      </a>
+    </div>
+  </div>
+
+  {{-- Grid ikon cepat --}}
+  <div class="app-quick-grid">
+    <a href="{{ route('tickets.index') }}" class="icon-tile" aria-label="Daftar tiket">
+      <div class="ic">🎫</div><div class="tx">Tiket</div>
+    </a>
+    <a href="{{ route('tickets.create') }}" class="icon-tile" aria-label="Buat tiket">
+      <div class="ic">➕</div><div class="tx">Buat</div>
+    </a>
+
+    @if($isAdmin)
+      <a href="{{ route('assets.index') }}" class="icon-tile" aria-label="Aset">
+        <div class="ic">🗂️</div><div class="tx">Aset</div>
+      </a>
+      <a href="{{ route('reports.tickets') }}" class="icon-tile" aria-label="Laporan">
+        <div class="ic">📊</div><div class="tx">Laporan</div>
+      </a>
+    @else
+      <a href="{{ route('dashboard') }}" class="icon-tile" aria-label="Ringkasan">
+        <div class="ic">📄</div><div class="tx">Ringkasan</div>
+      </a>
+      <a href="{{ route('tickets.index') }}" class="icon-tile" aria-label="Prioritas">
+        <div class="ic">⭐</div><div class="tx">Prioritas</div>
+      </a>
     @endif
   </div>
 </div>
 
-{{-- KARTU UTAMA (compact, 1 baris di mobile) --}}
-<div class="stats-grid mt-3">
-  @foreach($cards as $c)
-    <div class="card stat {{ !empty($c['tone']) ? 'tone-'.$c['tone'] : '' }}">
-      <div class="stat-title">{{ $c['title'] }}</div>
-      <div class="stat-value">{{ $c['value'] }}</div>
-      <div class="stat-hint">{{ $c['hint'] }}</div>
+{{-- ===== DESKTOP HEADER + STATS ===== --}}
+<div class="hidden md:block">
+  <div class="card">
+    <div class="bar">
+      <div>
+        <div class="text-lg font-semibold">Ringkasan Hari Ini</div>
+        <div class="text-sm text-gray-500">Lihat sekilas kondisi tiket dan lakukan tindakan penting.</div>
+      </div>
+      @if(!empty($quick))
+        <div class="flex items-center gap-2">
+          @foreach($quick as $q)
+            <a href="{{ $q['route'] }}" class="btn {{ $q['style'] }}">{{ $q['label'] }}</a>
+          @endforeach
+        </div>
+      @endif
     </div>
-  @endforeach
+  </div>
+
+  <div class="stats-grid mt-3">
+    @foreach($cards as $c)
+      <div class="card stat {{ !empty($c['tone']) ? 'tone-'.$c['tone'] : '' }}">
+        <div class="stat-title">{{ $c['title'] }}</div>
+        <div class="stat-value">{{ $c['value'] }}</div>
+        <div class="stat-hint">{{ $c['hint'] }}</div>
+      </div>
+    @endforeach
+  </div>
 </div>
 
-
-{{-- LIST SINGKAT: tiket terbaru/prioritas --}}
+{{-- ===== LIST SINGKAT: tiket terbaru/prioritas ===== --}}
 <div class="card mt-3">
   <div class="bar mb-2">
     <div class="legend mb-2">
@@ -52,29 +110,25 @@
   @else
     <div class="stack">
       @foreach($recent as $t)
-@php
-  $overdue = $t->sla_due_at && $t->sla_due_at->isPast() && !in_array($t->status, ['RESOLVED','CLOSED']);
-  $toneRow = 'info';
-  if ($overdue) {
-    $toneRow = 'danger';
-  } elseif ($t->sla_due_at && $t->sla_due_at->isToday() && !in_array($t->status,['RESOLVED','CLOSED'])) {
-    $toneRow = 'warn';
-  } elseif (in_array($t->status, ['RESOLVED','CLOSED'])) {
-    $toneRow = 'ok';
-  }
-  $deadlineStr = $t->sla_due_at ? $t->sla_due_at->format('d/m H:i') : '—';
-  $createdStr  = optional($t->created_at)->format('d/m H:i');
-  $urlShow     = route('tickets.show', $t->id);
+        @php
+          $overdue = $t->sla_due_at && $t->sla_due_at->isPast() && !in_array($t->status, ['RESOLVED','CLOSED']);
+          $toneRow = 'info';
+          if ($overdue) $toneRow = 'danger';
+          elseif ($t->sla_due_at && $t->sla_due_at->isToday() && !in_array($t->status,['RESOLVED','CLOSED'])) $toneRow = 'warn';
+          elseif (in_array($t->status, ['RESOLVED','CLOSED'])) $toneRow = 'ok';
 
-  // ==== Aset sesuai skema: kode_aset, nama, relasi nama ====
-  $asset       = optional($t->asset);
-  $assetTag    = $asset->kode_aset ?? '';
-  $assetName   = $asset->nama ?? '';
-  $assetLoc    = optional($asset->location)->nama ?? optional($asset->location)->name ?? '';
-  $assetVendor = optional($asset->vendor)->nama   ?? optional($asset->vendor)->name   ?? '';
-  $assetCat    = optional($asset->category)->nama ?? optional($asset->category)->name ?? '';
-@endphp
+          $deadlineStr = $t->sla_due_at ? $t->sla_due_at->format('d/m H:i') : '—';
+          $createdStr  = optional($t->created_at)->format('d/m H:i');
+          $urlShow     = route('tickets.show', $t->id);
 
+          // Aset (skema: kode_aset, nama, relasi: location/vendor/category punya nama/nama)
+          $asset       = optional($t->asset);
+          $assetTag    = $asset->kode_aset ?? '';
+          $assetName   = $asset->nama ?? '';
+          $assetLoc    = optional($asset->location)->nama ?? optional($asset->location)->name ?? '';
+          $assetVendor = optional($asset->vendor)->nama   ?? optional($asset->vendor)->name   ?? '';
+          $assetCat    = optional($asset->category)->nama ?? optional($asset->category)->name ?? '';
+        @endphp
 
         <div
           class="border rounded-xl p-3 row-accent {{ $toneRow }} cursor-pointer js-ticket-row"
@@ -92,7 +146,6 @@
           data-divisi="{{ $t->divisi_pj ?? '' }}"
           data-pj="{{ optional($t->assignee)->name ?? '' }}"
           data-created="{{ $createdStr }}"
-
           data-asset-tag="{{ $assetTag }}"
           data-asset-name="{{ $assetName }}"
           data-asset-loc="{{ $assetLoc }}"
@@ -108,9 +161,7 @@
               <div class="text-xs {{ $overdue ? 'text-red-600' : 'text-gray-500' }}">
                 Deadline: {{ $deadlineStr }} @if($overdue) • lewat deadline @endif
               </div>
-              <div class="text-xs text-gray-500">
-                {{ $createdStr }}
-              </div>
+              <div class="text-xs text-gray-500">{{ $createdStr }}</div>
             </div>
           </div>
 
@@ -134,8 +185,8 @@
   @endif
 </div>
 
-{{-- ===== Modal Ringkas Tiket (dengan info aset) ===== --}}
-<div id="ticketModal" class="fixed inset-0 hidden z-50" aria-hidden="true">
+{{-- ===== Modal Ringkas Tiket ===== --}}
+<div id="ticketModal" class="fixed inset-0 hidden z-50" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Ringkasan tiket">
   <div class="absolute inset-0 bg-black/40" data-close></div>
   <div class="relative max-w-lg mx-auto mt-24 px-4">
     <div class="card">
@@ -205,6 +256,7 @@
 (function(){
   const modal = document.getElementById('ticketModal');
   if (!modal) return;
+
   const closeEls = modal.querySelectorAll('[data-close]');
   const detailLink = document.getElementById('m_detail_link');
 
@@ -242,32 +294,29 @@
     const row = e.target.closest('.js-ticket-row');
     if (!row) return;
 
-    // Isi data tiket
     els.kode.textContent     = '#' + (row.dataset.kode || '');
     els.judul.textContent    = row.dataset.judul || '';
     els.created.textContent  = row.dataset.created || '—';
     els.deadline.textContent = row.dataset.deadline || '—';
     els.kategori.textContent = row.dataset.kategori || '—';
 
-    els.urgensi.textContent = row.dataset.urgensi || '—';
-    els.urgensi.className   = 'chip ' + (row.dataset.urgensi ? ('ug-' + row.dataset.urgensi) : 'tone-muted');
+    els.urgensi.textContent  = row.dataset.urgensi || '—';
+    els.urgensi.className    = 'chip ' + (row.dataset.urgensi ? ('ug-' + row.dataset.urgensi) : 'tone-muted');
 
-    els.status.textContent = row.dataset.status || '—';
-    els.status.className   = 'chip ' + (row.dataset.status ? ('st-' + row.dataset.status) : 'tone-muted');
+    els.status.textContent   = row.dataset.status || '—';
+    els.status.className     = 'chip ' + (row.dataset.status ? ('st-' + row.dataset.status) : 'tone-muted');
 
-    els.pj.textContent     = row.dataset.pj || '—';
-    els.divisi.textContent = row.dataset.divisi || '—';
+    els.pj.textContent       = row.dataset.pj || '—';
+    els.divisi.textContent   = row.dataset.divisi || '—';
 
-    // Isi data aset
-    els.aTag.textContent  = row.dataset.assetTag  || '—';
-    els.aName.textContent = row.dataset.assetName || '—';
-    els.aCat.textContent  = row.dataset.assetCat  || '—';
-    els.aLoc.textContent  = row.dataset.assetLoc  || '—';
-    els.aVendor.textContent = row.dataset.assetVendor || '—';
+    // Aset
+    els.aTag.textContent     = row.dataset.assetTag  || '—';
+    els.aName.textContent    = row.dataset.assetName || '—';
+    els.aCat.textContent     = row.dataset.assetCat  || '—';
+    els.aLoc.textContent     = row.dataset.assetLoc  || '—';
+    els.aVendor.textContent  = row.dataset.assetVendor || '—';
 
-    // Link detail
     if (detailLink) detailLink.href = row.dataset.url || '#';
-
     openModal();
   });
 

@@ -2,13 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ==== Theme v0 (migrasi dari <style> di layout) ==== */
-:root { --radius: 12px; }
-a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible {
-  outline: 2px solid transparent; box-shadow: 0 0 0 3px rgba(14,165,233,.35);
-  border-color: #0ea5e9 !important; border-radius: var(--radius);
+/* ========= Base / Theme ========= */
+:root { --radius: 12px; --safe-bottom: env(safe-area-inset-bottom, 0px); }
+
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible{
+  outline:2px solid transparent; box-shadow:0 0 0 3px rgba(14,165,233,.35);
+  border-color:#0ea5e9 !important; border-radius:var(--radius);
 }
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.55rem .9rem;border-radius:var(--radius);font-size:.875rem;line-height:1.15;}
+
+/* ========= Buttons ========= */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.55rem .9rem;border-radius:var(--radius);font-size:.875rem;line-height:1.15}
 .btn:disabled{opacity:.6;cursor:not-allowed}
 .btn-primary{background:#111827;color:#fff;border:1px solid #111827}
 .btn-primary:hover{filter:brightness(1.05)}
@@ -19,16 +22,22 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .btn-danger{background:#ef4444;color:#fff;border:1px solid #ef4444}
 .btn-ghost{background:transparent;color:#111;border:1px solid transparent}
 .btn-block{width:100%}
+
+/* ========= Form ========= */
 .field{border:1px solid #e5e7eb;border-radius:var(--radius);padding:.55rem .75rem;width:100%;font-size:.95rem;background:#fff}
 .field[disabled]{background:#f3f4f6;color:#6b7280}
 .hint{font-size:.75rem;color:#6b7280}
 .error{font-size:.8rem;color:#dc2626;margin-top:.25rem}
+
+/* ========= Card / Table ========= */
 .card{background:#fff;padding:1rem;border-radius:var(--radius);box-shadow:0 6px 20px rgba(0,0,0,.05)}
 .table th,.table td{padding:.6rem .5rem}
 .table thead tr{border-bottom:1px solid #e5e7eb}
 .table tbody tr{border-bottom:1px solid #f1f5f9}
 .table tbody tr:hover{background:#f9fafb}
 .table .truncate{max-width:280px}
+
+/* ========= Chips (Status & Urgensi) ========= */
 .chip{display:inline-block;border-radius:999px;font-size:.72rem;padding:.22rem .6rem;border:1px solid transparent}
 .st-OPEN{background:#eef2ff;color:#3730a3;border-color:#c7d2fe}
 .st-ASSIGNED{background:#f0f9ff;color:#075985;border-color:#bae6fd}
@@ -40,69 +49,121 @@ a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible
 .ug-SEDANG{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}
 .ug-TINGGI{background:#fff1f2;color:#be123c;border-color:#fecdd3}
 .ug-DARURAT{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+
+/* ========= Layout utils ========= */
 .stack{display:grid;gap:.75rem}
 .stack-lg{display:grid;gap:1rem}
 .bar{display:flex;align-items:center;justify-content:space-between}
-/* ====== TONES: bantu warna manusiawi ====== */
-/* Tone dasar */
-.tone-ok     { background:#ecfdf5; color:#065f46; border:1px solid #bbf7d0; }
-.tone-warn   { background:#fff7ed; color:#9a3412; border:1px solid #fed7aa; }
-.tone-danger { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
-.tone-info   { background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; }
-.tone-muted  { background:#f3f4f6; color:#374151; border:1px solid #e5e7eb; }
 
-/* Varian untuk kartu: lebih lembut (pakai .card + .tone-*) */
-.card.tone-ok     { background:#f0fdf4; border-color:#bbf7d0; color:#065f46; }
-.card.tone-warn   { background:#fffbeb; border-color:#fde68a; color:#92400e; }
-.card.tone-danger { background:#fef2f2; border-color:#fecaca; color:#991b1b; }
-.card.tone-info   { background:#f0f9ff; border-color:#bae6fd; color:#1d4ed8; }
-.card.tone-muted  { background:#f8fafc; border-color:#e5e7eb; color:#374151; }
+/* ========= Human tones ========= */
+.tone-ok{background:#ecfdf5;color:#065f46;border:1px solid #bbf7d0}
+.tone-warn{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa}
+.tone-danger{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+.tone-info{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}
+.tone-muted{background:#f3f4f6;color:#374151;border:1px solid #e5e7eb}
 
-/* Aksen baris (mis. list tiket): garis kiri + latar tipis saat butuh highlight */
-.row-accent { border-left-width:6px; border-radius:12px; }
-.row-accent.ok     { border-left-color:#22c55e; background:linear-gradient(90deg,#f0fdf4,transparent 60%); }
-.row-accent.warn   { border-left-color:#f59e0b; background:linear-gradient(90deg,#fffbeb,transparent 60%); }
-.row-accent.danger { border-left-color:#ef4444; background:linear-gradient(90deg,#fef2f2,transparent 60%); }
-.row-accent.info   { border-left-color:#3b82f6; background:linear-gradient(90deg,#f0f9ff,transparent 60%); }
+/* Card soft variants */
+.card.tone-ok{background:#f0fdf4;border-color:#bbf7d0;color:#065f46}
+.card.tone-warn{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.card.tone-danger{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+.card.tone-info{background:#f0f9ff;border-color:#bae6fd;color:#1d4ed8}
+.card.tone-muted{background:#f8fafc;border-color:#e5e7eb;color:#374151}
 
-/* Mini legend chip (opsional) */
-.legend { display:inline-flex; align-items:center; gap:.4rem; font-size:.78rem; color:#6b7280 }
-.legend i { width:.75rem; height:.75rem; border-radius:999px; display:inline-block; }
-.legend i.ok     { background:#22c55e; }
-.legend i.warn   { background:#f59e0b; }
-.legend i.danger { background:#ef4444; }
-.legend i.info   { background:#3b82f6; }
+/* Row accents */
+.row-accent{border-left-width:6px;border-radius:12px}
+.row-accent.ok{border-left-color:#22c55e;background:linear-gradient(90deg,#f0fdf4,transparent 60%)}
+.row-accent.warn{border-left-color:#f59e0b;background:linear-gradient(90deg,#fffbeb,transparent 60%)}
+.row-accent.danger{border-left-color:#ef4444;background:linear-gradient(90deg,#fef2f2,transparent 60%)}
+.row-accent.info{border-left-color:#3b82f6;background:linear-gradient(90deg,#f0f9ff,transparent 60%)}
 
-/* ===== Floating Install Button (FAB) ===== */
-.fab-wrap { position:fixed; right:1rem; bottom:5.5rem; z-index:50; }
-@media (min-width: 768px) { .fab-wrap { bottom:1.25rem; } } /* desktop sedikit lebih bawah */
-.fab-wrap .btn { border-radius:999px; box-shadow:0 10px 30px rgba(0,0,0,.15); }
+/* Legend mini */
+.legend{display:inline-flex;align-items:center;gap:.4rem;font-size:.78rem;color:#6b7280}
+.legend i{width:.75rem;height:.75rem;border-radius:999px;display:inline-block}
+.legend i.ok{background:#22c55e}
+.legend i.warn{background:#f59e0b}
+.legend i.danger{background:#ef4444}
+.legend i.info{background:#3b82f6}
 
-/* toast/banner kecil */
-.toast {
-  position: fixed; bottom: 5.5rem; left: 0; right: 0; margin: 0 auto;
-  max-width: 28rem; z-index: 50;
-  background:#111827; color:#fff; font-size:.875rem; border-radius:12px; padding:.75rem 1rem;
-  box-shadow: 0 10px 30px rgba(0,0,0,.25);
-}
-@media (min-width: 768px) { .toast{ bottom: 1.25rem; } }
+/* ========= Drawer ========= */
+.drawer{position:fixed;inset:0;display:none;z-index:60}
+.drawer.active{display:block}
+.drawer .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.35)}
+.drawer .panel{position:absolute;top:0;left:0;height:100%;width:80%;max-width:320px;background:#fff;border-right:1px solid #e5e7eb;padding:1rem;transform:translateX(-100%);transition:transform .2s ease}
+.drawer.active .panel{transform:translateX(0)}
+.drawer .close{position:absolute;right:.5rem;top:.5rem}
 
-.drawer { position: fixed; inset: 0; display: none; z-index: 60; }
-.drawer.active { display: block; }
-.drawer .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.35); }
-.drawer .panel {
-  position: absolute; top: 0; left: 0; height: 100%;
-  width: 80%; max-width: 320px; background: #fff; border-right: 1px solid #e5e7eb;
-  padding: 1rem; transform: translateX(-100%); transition: transform .2s ease;
-}
-.drawer.active .panel { transform: translateX(0); }
-.drawer .close { position: absolute; right: .5rem; top: .5rem; }
-/* ==== Compact Stat Cards (mobile: 1 row, small) ==== */
+/* ========= FAB & Toast ========= */
+.fab-wrap{position:fixed;right:1rem;bottom:5.5rem;z-index:50}
+@media (min-width:768px){.fab-wrap{bottom:1.25rem}}
+.fab-wrap .btn{border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.15)}
+
+.toast{position:fixed;bottom:5.5rem;left:0;right:0;margin:0 auto;max-width:28rem;z-index:50;background:#111827;color:#fff;font-size:.875rem;border-radius:12px;padding:.75rem 1rem;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+@media (min-width:768px){.toast{bottom:1.25rem}}
+
+/* ========= Stats (compact; 1 baris di mobile) ========= */
 .stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem}
 @media (min-width:768px){.stats-grid{gap:.75rem}}
-
-.card.stat{padding:.75rem} /* lebih rapat dari .card default */
+.card.stat{padding:.75rem}
 .stat-title{font-size:.72rem;opacity:.8}
 .stat-value{font-size:1.35rem;line-height:1.2;font-weight:600}
-@media (min-width:768px){.stat-value{font-size:1.875rem}} /* md: ~text-3xl */
+@media (min-width:768px){.stat-value{font-size:1.875rem}}
 .stat-hint{font-size:.72rem;opacity:.75}
+
+/* ========= App-like Dashboard (mobile) ========= */
+.app-hero{background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;border-radius:16px;padding:14px;box-shadow:0 10px 30px rgba(37,99,235,.25)}
+.app-hero .subtitle{opacity:.9;font-size:.8rem}
+.app-hero .avatar{width:44px;height:44px;border-radius:999px;background:#ffffff22;display:flex;align-items:center;justify-content:center;font-weight:600}
+
+/* Stat pills (horizontal scroll) */
+.hscroll{display:flex;gap:.6rem;overflow:auto;scroll-snap-type:x mandatory;padding-bottom:.25rem}
+.hscroll>*{scroll-snap-align:start;min-width:48%}
+@media (min-width:390px){.hscroll>*{min-width:45%}}
+.app-pill{background:#fff;border-radius:14px;padding:.6rem .75rem;box-shadow:0 10px 20px rgba(0,0,0,.06);color:#111827}
+.app-pill .k{font-size:.7rem;color:#6b7280}
+.app-pill .v{font-size:1rem;font-weight:700}
+
+/* Quick grid icons */
+.app-quick-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem}
+.icon-tile{background:#fff;border-radius:16px;padding:.8rem;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+.icon-tile .ic{font-size:1.25rem;line-height:1}
+.icon-tile .tx{font-size:.72rem;margin-top:.35rem;color:#374151}
+
+/* ========= Mobile Appbar ========= */
+.appbar{background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;border-radius:14px;padding:.5rem .75rem;display:flex;align-items:center;justify-content:space-between;box-shadow:0 10px 30px rgba(37,99,235,.25)}
+.appbar-btn{background:#ffffff22;border:0;color:#fff;border-radius:10px;padding:.45rem .6rem}
+.appbar-brand{font-weight:600}
+.appbar-cta{background:#fff;color:#111827;border-radius:999px;padding:.45rem .65rem;box-shadow:0 10px 20px rgba(0,0,0,.12)}
+
+/* ========= Quick FAB (tombol bulat besar di tengah) ========= */
+.qfab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(62px + var(--safe-bottom));z-index:60}
+.qfab .btn{width:58px;height:58px;border-radius:999px;box-shadow:0 14px 34px rgba(14,165,233,.35);font-size:1.25rem}
+@media(min-width:768px){.qfab{display:none}}
+
+/* ========= Desktop topnav active state (aria-current) ========= */
+.topnav a[aria-current="page"]{background:#111827;color:#fff;border-color:#111827}
+
+
+/* === Bottom Tabbar with Center FAB === */
+:root{ --safe-bottom: env(safe-area-inset-bottom,0px); }
+
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:#fff;border-top:1px solid #e5e7eb;
+  padding-bottom:calc(.25rem + var(--safe-bottom));}
+@media(min-width:768px){.tabbar{display:none}}
+
+.tabbar-inner{position:relative;max-width:72rem;margin:0 auto}
+.tabbar-inner::before{
+  content:"";position:absolute;left:50%;top:-34px;transform:translateX(-50%);
+  width:92px;height:92px;background:#fff;border-radius:999px;box-shadow:0 -1px 0 #e5e7eb;
+}
+
+.tabnav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.25rem;align-items:end;padding:.25rem .75rem}
+.tab{display:flex;flex-direction:column;align-items:center;gap:.15rem;padding:.25rem .25rem;color:#6b7280;text-decoration:none}
+.tab .ic{font-size:1.15rem;line-height:1}
+.tab .tx{font-size:.7rem}
+.tab[aria-current="page"]{color:#0ea5e9;font-weight:600}
+
+.fab-center{position:absolute;left:50%;top:-46px;transform:translateX(-50%);
+  width:64px;height:64px;border-radius:999px;background:#0ea5e9;color:#fff;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 14px 34px rgba(14,165,233,.45), 0 6px 14px rgba(0,0,0,.15)}
+.fab-center:active{transform:translateX(-50%) scale(.97)}
+.fab-center .ic{font-size:1.35rem;line-height:1}

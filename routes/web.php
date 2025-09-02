@@ -10,13 +10,15 @@ use App\Http\Controllers\Web\SlaWebController;
 use App\Http\Controllers\Web\UserWebController;
 use App\Http\Controllers\Web\ReportWebController;
 use App\Http\Controllers\Web\DashboardWebController;
+use App\Http\Controllers\Web\AssetLookupController;
 
 
 require __DIR__.'/auth.php'; // route login/logout dari Breeze (Blade)
 
 Route::view('/offline', 'offline')->name('offline');
 
-
+Route::middleware('auth')->get('/assets/lookup', AssetLookupController::class)
+    ->name('assets.lookup');
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [DashboardWebController::class, 'index'])->name('home');
     Route::get('/dashboard', [DashboardWebController::class, 'index'])->name('dashboard');
@@ -78,5 +80,6 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/reports/tickets',         [ReportWebController::class, 'tickets'])->name('reports.tickets');
     Route::get('/reports/tickets/export',  [ReportWebController::class, 'exportTickets'])->name('reports.tickets.export');
+    
     
 });

@@ -10,15 +10,36 @@
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <style>
+    :root{ --safe-bottom: env(safe-area-inset-bottom,0px); }
+    /* Quick FAB (tombol bulat besar) */
+    .qfab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(62px + var(--safe-bottom));z-index:60}
+    .qfab .btn{width:58px;height:58px;border-radius:999px;box-shadow:0 14px 34px rgba(14,165,233,.35);font-size:1.25rem}
+    @media(min-width:768px){.qfab{display:none}}
+    /* Header desktop lebih clean */
+    .topnav a[aria-current="page"]{background:#111827;color:#fff;border-color:#111827}
+  </style>
 </head>
 <body class="bg-gray-100">
 <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:bg-white focus:px-3 focus:py-2 focus:rounded-md">Lewati ke konten</a>
 
-<div class="max-w-7xl mx-auto p-4 pb-20 md:pb-4">
+<div class="max-w-7xl mx-auto p-4 pb-24 md:pb-4">
 
-  {{-- TOP BAR / NAV (sticky + blur) --}}
-  <header role="banner" class="mb-4 sticky top-0 z-40">
-    <div class="bg-white/90 backdrop-blur rounded-xl shadow px-4 py-3">
+  {{-- ===== APP BAR (Mobile) + NAV DESKTOP ===== --}}
+  <header role="banner" class="mb-3 sticky top-0 z-40">
+    {{-- Mobile app-like appbar --}}
+    <div class="md:hidden appbar">
+      <button id="drawerToggle" class="appbar-btn" aria-controls="appDrawer" aria-expanded="false" aria-label="Buka menu">☰</button>
+      <a href="{{ route('home') }}" class="appbar-brand">Ticketing</a>
+      @auth
+        <a href="{{ route('tickets.create') }}" class="appbar-cta" aria-label="Buat Tiket">➕</a>
+      @else
+        <a href="{{ route('login') }}" class="appbar-cta" aria-label="Login">⇢</a>
+      @endauth
+    </div>
+
+    {{-- Desktop nav (clean) --}}
+    <div class="hidden md:block bg-white/90 backdrop-blur rounded-xl shadow px-4 py-3">
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-3 min-w-0">
           <a href="{{ route('home') }}" class="text-lg font-semibold truncate">Ticketing App</a>
@@ -32,19 +53,24 @@
           @endauth
         </div>
 
-        {{-- Desktop nav --}}
         @auth
-        @php
-          $activeBtn = fn($pat) => request()->routeIs($pat) ? 'bg-black text-white border-black' : '';
-        @endphp
-        <nav aria-label="Navigasi utama" class="hidden md:flex items-center gap-2 text-sm">
-          <a href="{{ route('dashboard') }}" class="btn btn-outline {{ $activeBtn('dashboard') }}">Dashboard</a>
-          <a href="{{ route('tickets.index') }}" class="btn btn-outline {{ $activeBtn('tickets.*') }}">Tiket</a>
-          <a href="{{ route('tickets.create') }}" class="btn btn-brand">Buat Tiket</a>
+        <nav aria-label="Navigasi utama" class="topnav hidden md:flex items-center gap-2 text-sm">
+          <a href="{{ route('dashboard') }}"
+             class="btn btn-outline"
+             aria-current="{{ request()->routeIs('dashboard') ? 'page' : 'false' }}">Dashboard</a>
+
+          <a href="{{ route('tickets.index') }}"
+             class="btn btn-outline"
+             aria-current="{{ request()->routeIs('tickets.*') ? 'page' : 'false' }}">Tiket</a>
 
           @if(in_array((auth()->user()->role ?? null), ['PJ','SUPERADMIN'], true))
-            <a href="{{ route('assets.index') }}" class="btn btn-outline {{ $activeBtn('assets.*') }}">Aset</a>
-            <a href="{{ route('reports.tickets') }}" class="btn btn-outline {{ $activeBtn('reports.tickets') }}">Laporan</a>
+            <a href="{{ route('assets.index') }}"
+               class="btn btn-outline"
+               aria-current="{{ request()->routeIs('assets.*') ? 'page' : 'false' }}">Aset</a>
+
+            <a href="{{ route('reports.tickets') }}"
+               class="btn btn-outline"
+               aria-current="{{ request()->routeIs('reports.tickets') ? 'page' : 'false' }}">Laporan</a>
           @endif
 
           @if((auth()->user()->role ?? null) === 'SUPERADMIN')
@@ -70,20 +96,14 @@
         </nav>
         @endauth
 
-        {{-- Mobile actions (CTA + Drawer toggle) --}}
-        @auth
-          <div class="md:hidden flex items-center gap-2">
-            <a href="{{ route('tickets.create') }}" class="btn btn-brand">Buat</a>
-            <button id="drawerToggle" class="btn btn-outline" aria-controls="appDrawer" aria-expanded="false">Menu</button>
-          </div>
-        @else
-          <a href="{{ route('login') }}" class="text-sm underline">Login</a>
-        @endauth
+        @guest
+          <a href="{{ route('login') }}" class="hidden md:inline text-sm underline">Login</a>
+        @endguest
       </div>
     </div>
   </header>
 
-  {{-- Drawer samping (mobile) --}}
+  {{-- ===== Drawer (mobile) ===== --}}
   @auth
   <div id="appDrawer" class="drawer" aria-hidden="true" aria-labelledby="drawerTitle">
     <div class="backdrop" data-close></div>
@@ -92,16 +112,13 @@
 
       <div id="drawerTitle" class="text-sm text-gray-500 mb-3">Navigasi</div>
       <div class="grid gap-2 text-sm">
-        @php
-          $activeBtn = fn($pat) => request()->routeIs($pat) ? 'bg-black text-white border-black' : '';
-        @endphp
-        <a href="{{ route('dashboard') }}" class="btn btn-outline btn-block {{ $activeBtn('dashboard') }}">Dashboard</a>
-        <a href="{{ route('tickets.index') }}" class="btn btn-outline btn-block {{ $activeBtn('tickets.*') }}">Tiket</a>
+        <a href="{{ route('dashboard') }}" class="btn btn-outline btn-block {{ request()->routeIs('dashboard') ? 'bg-black text-white border-black' : '' }}" aria-current="{{ request()->routeIs('dashboard') ? 'page' : 'false' }}">Dashboard</a>
+        <a href="{{ route('tickets.index') }}" class="btn btn-outline btn-block {{ request()->routeIs('tickets.*') ? 'bg-black text-white border-black' : '' }}" aria-current="{{ request()->routeIs('tickets.*') ? 'page' : 'false' }}">Tiket</a>
         <a href="{{ route('tickets.create') }}" class="btn btn-brand btn-block">Buat Tiket</a>
 
         @if(in_array((auth()->user()->role ?? null), ['PJ','SUPERADMIN'], true))
-          <a href="{{ route('assets.index') }}" class="btn btn-outline btn-block {{ $activeBtn('assets.*') }}">Aset</a>
-          <a href="{{ route('reports.tickets') }}" class="btn btn-outline btn-block {{ $activeBtn('reports.tickets') }}">Laporan</a>
+          <a href="{{ route('assets.index') }}" class="btn btn-outline btn-block {{ request()->routeIs('assets.*') ? 'bg-black text-white border-black' : '' }}" aria-current="{{ request()->routeIs('assets.*') ? 'page' : 'false' }}">Aset</a>
+          <a href="{{ route('reports.tickets') }}" class="btn btn-outline btn-block {{ request()->routeIs('reports.tickets') ? 'bg-black text-white border-black' : '' }}" aria-current="{{ request()->routeIs('reports.tickets') ? 'page' : 'false' }}">Laporan</a>
         @endif
 
         @if((auth()->user()->role ?? null) === 'SUPERADMIN')
@@ -122,7 +139,7 @@
   </div>
   @endauth
 
-  {{-- Flash & Errors --}}
+  {{-- ===== Flash & Errors ===== --}}
   @if (session('ok'))
     <div data-flash="ok" class="mb-3 border rounded-lg px-3 py-2 text-sm bg-green-50 text-green-700 border-green-200" role="status" aria-live="polite">
       {{ session('ok') }}
@@ -136,7 +153,7 @@
     </div>
   @endif
 
-  {{-- ===== Page Header (judul + breadcrumb + actions) ===== --}}
+  {{-- ===== Page Header (opsional) ===== --}}
   @php
     $routeName = optional(request()->route())->getName();
     $defaultTitleMap = [
@@ -192,28 +209,63 @@
       </div>
     </div>
   @endif
-  {{-- ===== End Page Header ===== --}}
 
-  {{-- Main content --}}
+  {{-- ===== Main content ===== --}}
   <main id="main" role="main">@yield('content')</main>
 </div>
 
+{{-- ===== Bottom Tabbar (mobile, with center FAB) ===== --}}
 @auth
 @php
   $role = auth()->user()->role ?? 'USER';
   $isAdmin = in_array($role, ['PJ','SUPERADMIN'], true);
 @endphp
-<div class="fixed md:hidden bottom-0 left-0 right-0 border-t bg-white/95 backdrop-blur z-40" role="navigation" aria-label="Bottom bar">
-  <nav class="max-w-7xl mx-auto grid {{ $isAdmin ? 'grid-cols-4' : 'grid-cols-3' }} gap-1 p-2">
-    <a href="{{ route('dashboard') }}" class="btn btn-outline btn-block {{ request()->routeIs('dashboard') ? 'bg-black text-white border-black' : '' }}" aria-label="Dashboard">🏠 <span class="sr-only">Dashboard</span></a>
-    <a href="{{ route('tickets.index') }}" class="btn btn-outline btn-block {{ request()->routeIs('tickets.*') ? 'bg-black text-white border-black' : '' }}" aria-label="Daftar Tiket">🎫 <span class="sr-only">Tiket</span></a>
-    <a href="{{ route('tickets.create') }}" class="btn btn-brand btn-block" aria-label="Buat Tiket">➕ <span class="sr-only">Buat Tiket</span></a>
-    @if($isAdmin)
-      <a href="{{ route('reports.tickets') }}" class="btn btn-outline btn-block {{ request()->routeIs('reports.tickets') ? 'bg-black text-white border-black' : '' }}" aria-label="Laporan">📊 <span class="sr-only">Laporan</span></a>
-    @endif
-  </nav>
+<div class="tabbar md:hidden" role="navigation" aria-label="Tabbar bawah">
+  <div class="tabbar-inner">
+    <a href="{{ route('tickets.create') }}" class="fab-center" aria-label="Buat Tiket">
+      <span class="ic">➕</span>
+    </a>
+
+    <nav class="tabnav">
+      <a href="{{ route('dashboard') }}"
+         class="tab"
+         aria-current="{{ request()->routeIs('dashboard') ? 'page' : 'false' }}">
+        <span class="ic">🏠</span><span class="tx">Beranda</span>
+      </a>
+
+      <a href="{{ route('tickets.index') }}"
+         class="tab"
+         aria-current="{{ request()->routeIs('tickets.*') ? 'page' : 'false' }}">
+        <span class="ic">🎫</span><span class="tx">Tiket</span>
+      </a>
+
+      <div></div> {{-- spacer for center fab/notch --}}
+
+      @if($isAdmin)
+        <a href="{{ route('reports.tickets') }}"
+           class="tab"
+           aria-current="{{ request()->routeIs('reports.tickets') ? 'page' : 'false' }}">
+          <span class="ic">📊</span><span class="tx">Laporan</span>
+        </a>
+      @else
+        <a href="{{ route('assets.index') }}"
+           class="tab"
+           aria-current="{{ request()->routeIs('assets.*') ? 'page' : 'false' }}">
+          <span class="ic">🗂️</span><span class="tx">Aset</span>
+        </a>
+      @endif
+
+      <form method="POST" action="{{ route('logout') }}" class="tab p-0 m-0">
+        @csrf
+        <button class="tab" style="background:transparent;border:none" aria-label="Logout">
+          <span class="ic">🚪</span><span class="tx">Logout</span>
+        </button>
+      </form>
+    </nav>
+  </div>
 </div>
 @endauth
+
 
 {{-- FAB: Install App --}}
 <div id="installFabWrap" class="fab-wrap hidden">
@@ -230,73 +282,46 @@
   </div>
 </div>
 
-{{-- JS: drawer toggle, flash, prevent double submit, SW, install --}}
+{{-- ===== JS: drawer, flash, prevent double submit, SW, install ===== --}}
 <script>
   // Drawer
   const drawer = document.getElementById('appDrawer');
   const btnDrawer = document.getElementById('drawerToggle');
-
-  function openDrawer() {
-    if (!drawer) return;
-    drawer.classList.add('active');
-    btnDrawer?.setAttribute('aria-expanded','true');
-    drawer.setAttribute('aria-hidden','false');
-    const first = drawer.querySelector('a,button,input,select,textarea');
-    first && first.focus();
-  }
-  function closeDrawer() {
-    if (!drawer) return;
-    drawer.classList.remove('active');
-    btnDrawer?.setAttribute('aria-expanded','false');
-    drawer.setAttribute('aria-hidden','true');
-  }
-  btnDrawer?.addEventListener('click', () => {
-    drawer.classList.contains('active') ? closeDrawer() : openDrawer();
-  });
-  drawer?.addEventListener('click', (e) => {
-    if (e.target.matches('.backdrop,[data-close]')) closeDrawer();
-  });
+  function openDrawer(){ if(!drawer) return; drawer.classList.add('active'); btnDrawer?.setAttribute('aria-expanded','true'); drawer.setAttribute('aria-hidden','false'); (drawer.querySelector('a,button,input,select,textarea')||{}).focus?.(); }
+  function closeDrawer(){ if(!drawer) return; drawer.classList.remove('active'); btnDrawer?.setAttribute('aria-expanded','false'); drawer.setAttribute('aria-hidden','true'); }
+  btnDrawer?.addEventListener('click', () => drawer.classList.contains('active') ? closeDrawer() : openDrawer());
+  drawer?.addEventListener('click', (e) => { if (e.target.matches('.backdrop,[data-close]')) closeDrawer(); });
   window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
 
   // Flash ok auto-hide
-  const flash = document.querySelector('[data-flash="ok"]');
-  if (flash) setTimeout(()=>flash.remove(), 3000);
+  const flash = document.querySelector('[data-flash="ok"]'); if (flash) setTimeout(()=>flash.remove(), 3000);
 
   // Prevent double submit
-  for (const f of document.querySelectorAll('form')) {
-    f.addEventListener('submit', () => {
-      const btn = f.querySelector('button[type="submit"],button:not([type])');
-      if (btn) btn.disabled = true;
-    });
-  }
+  for (const f of document.querySelectorAll('form')) { f.addEventListener('submit', () => { const btn = f.querySelector('button[type="submit"],button:not([type])'); if (btn) btn.disabled = true; }); }
 
   // Service Worker
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' })
-        .then(reg => {
-          reg.addEventListener('updatefound', () => {
-            const nw = reg.installing;
-            nw?.addEventListener('statechange', () => {
-              if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-                const bar = document.createElement('div');
-                bar.className = 'fixed bottom-16 left-0 right-0 mx-auto max-w-xl bg-black text-white text-sm rounded-xl shadow p-3 z-50';
-                bar.innerHTML = 'Versi baru tersedia. <button id="swRefresh" class="btn btn-brand" style="margin-left:.5rem">Muat ulang</button>';
-                document.body.appendChild(bar);
-                document.getElementById('swRefresh').onclick = () => location.reload();
-              }
-            });
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(reg => {
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          nw?.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              const bar = document.createElement('div');
+              bar.className = 'fixed bottom-16 left-0 right-0 mx-auto max-w-xl bg-black text-white text-sm rounded-xl shadow p-3 z-50';
+              bar.innerHTML = 'Versi baru tersedia. <button id="swRefresh" class="btn btn-brand" style="margin-left:.5rem">Muat ulang</button>';
+              document.body.appendChild(bar);
+              document.getElementById('swRefresh').onclick = () => location.reload();
+            }
           });
-        })
-        .catch(console.error);
+        });
+      }).catch(console.error);
     });
     navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
   }
 
   // PWA Install FAB
-  function alreadyInstalled() {
-    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-  }
+  function alreadyInstalled(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
   function show(el){ el && el.classList.remove('hidden'); }
   function hide(el){ el && el.classList.add('hidden'); }
 
@@ -309,39 +334,20 @@
   const isIOS = /iphone|ipad|ipod/.test(ua);
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    if (alreadyInstalled()) return;
-    deferredPrompt = e;
-    show(fabWrap);
-  });
-
-  async function triggerInstall() {
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); if (alreadyInstalled()) return; deferredPrompt = e; show(fabWrap); });
+  async function triggerInstall(){
     if (alreadyInstalled()) { hide(fabWrap); return; }
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const choice = await deferredPrompt.userChoice;
       if (choice.outcome === 'accepted') hide(fabWrap);
-      deferredPrompt = null;
-      return;
+      deferredPrompt = null; return;
     }
     if (isIOS && isSafari) { show(iosBar); return; }
   }
   fabBtn?.addEventListener('click', triggerInstall);
-
-  window.addEventListener('appinstalled', () => {
-    hide(fabWrap);
-    const bar = document.createElement('div');
-    bar.className = 'toast';
-    bar.textContent = 'Aplikasi berhasil dipasang.';
-    document.body.appendChild(bar);
-    setTimeout(()=>bar.remove(), 2500);
-  });
-
-  window.addEventListener('load', () => {
-    if (alreadyInstalled()) { hide(fabWrap); return; }
-    if (isIOS && isSafari) { show(fabWrap); }
-  });
+  window.addEventListener('appinstalled', () => { hide(fabWrap); const bar = document.createElement('div'); bar.className = 'toast'; bar.textContent = 'Aplikasi berhasil dipasang.'; document.body.appendChild(bar); setTimeout(()=>bar.remove(), 2500); });
+  window.addEventListener('load', () => { if (alreadyInstalled()) { hide(fabWrap); return; } if (isIOS && isSafari) { show(fabWrap); } });
 </script>
 </body>
 </html>

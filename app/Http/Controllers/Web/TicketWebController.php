@@ -17,10 +17,20 @@ class TicketWebController extends Controller
         $user = $req->user();
 
         $q = Ticket::query()
-            ->with(['pelapor:id,name', 'assignee:id,name,divisi', 'asset:id,kode_aset,nama'])
-            ->when($req->query('status'), function ($qq, $v) { $qq->where('status', $v); })
-            ->when($req->query('kategori'), function ($qq, $v) { $qq->where('kategori', $v); })
-            ->when($req->query('urgensi'), function ($qq, $v) { $qq->where('urgensi', $v); })
+            ->with([
+                'pelapor:id,name',
+                'assignee:id,name,divisi',
+                // Pastikan FK aset ikut di-select agar nested eager load (category/location/vendor) bisa bekerja
+                'asset' => function ($aq) {
+                    $aq->select('id','kode_aset','nama','asset_category_id','location_id','vendor_id');
+                },
+                'asset.category:id,nama',
+                'asset.location:id,nama',
+                'asset.vendor:id,nama',
+            ])
+            ->when($req->query('status'), fn ($qq, $v) => $qq->where('status', $v))
+            ->when($req->query('kategori'), fn ($qq, $v) => $qq->where('kategori', $v))
+            ->when($req->query('urgensi'), fn ($qq, $v) => $qq->where('urgensi', $v))
             ->when($req->query('q'), function ($qq, $v) {
                 $like = '%' . $v . '%';
                 $qq->where(function ($x) use ($like) {
@@ -41,10 +51,10 @@ class TicketWebController extends Controller
         return view('tickets.index', [
             'tickets' => $tickets,
             'filters' => [
-                'q' => $req->query('q'),
-                'status' => $req->query('status'),
+                'q'        => $req->query('q'),
+                'status'   => $req->query('status'),
                 'kategori' => $req->query('kategori'),
-                'urgensi' => $req->query('urgensi'),
+                'urgensi'  => $req->query('urgensi'),
             ],
         ]);
     }
@@ -148,9 +158,15 @@ class TicketWebController extends Controller
         $ticket = Ticket::with([
             'pelapor:id,name',
             'assignee:id,name,divisi',
-            'asset:id,kode_aset,nama',
+            // Asset + relasi agar Kategori/Lokasi/Vendor tampil di blade
+            'asset' => function ($aq) {
+                $aq->select('id','kode_aset','nama','asset_category_id','location_id','vendor_id');
+            },
+            'asset.category:id,nama',
+            'asset.location:id,nama',
+            'asset.vendor:id,nama',
             'comments.user:id,name,role,divisi',
-            'attachments'
+            'attachments',
         ])->findOrFail($id);
 
         $pjs = User::where('role','PJ')->where('aktif',true)
@@ -253,33 +269,33 @@ class TicketWebController extends Controller
     }
 
     public function detach(Request $req, $id, $attId)
-{
-    /** @var User $user */ $user = $req->user();
-    $ticket = Ticket::findOrFail($id);
+    {
+        /** @var User $user */ $user = $req->user();
+        $ticket = Ticket::findOrFail($id);
 
-    // RBAC: owner, PJ divisi, atau superadmin
-    if (!($user->id === $ticket->user_id
-        || ($user->role === User::ROLE_PJ && $user->divisi === $ticket->divisi_pj)
-        || $user->role === User::ROLE_SUPERADMIN)) {
-        abort(403);
-    }
-
-    $att = $ticket->attachments()->where('id', $attId)->firstOrFail();
-
-    try {
-        if ($att->path && Storage::disk('public')->exists($att->path)) {
-            Storage::disk('public')->delete($att->path);
+        // RBAC: owner, PJ divisi, atau superadmin
+        if (!($user->id === $ticket->user_id
+            || ($user->role === User::ROLE_PJ && $user->divisi === $ticket->divisi_pj)
+            || $user->role === User::ROLE_SUPERADMIN)) {
+            abort(403);
         }
-    } catch (\Throwable $e) {
-        report($e); // best-effort
+
+        $att = $ticket->attachments()->where('id', $attId)->firstOrFail();
+
+        try {
+            if ($att->path && Storage::disk('public')->exists($att->path)) {
+                Storage::disk('public')->delete($att->path);
+            }
+        } catch (\Throwable $e) {
+            report($e); // best-effort
+        }
+
+        $att->delete();
+
+        return back()->with('ok','Lampiran dihapus.');
     }
 
-    $att->delete();
-
-    return back()->with('ok','Lampiran dihapus.');
-}
-
-    public function edit($id)
+public function edit($id)
 {
     $ticket   = Ticket::with(['asset'])->findOrFail($id);
     $assets   = Asset::orderBy('kode_aset')->limit(200)->get(['id','kode_aset','nama']);
@@ -295,7 +311,7 @@ class TicketWebController extends Controller
     return view('tickets.edit', compact('ticket','assets','pjs','kategori','urgensi'));
 }
 
-public function update(Request $req, $id, SlaService $sla)
+   public function update(Request $req, $id, SlaService $sla)
 {
     /** @var User $u */ $u = $req->user();
     $ticket = Ticket::findOrFail($id);
@@ -320,18 +336,18 @@ public function update(Request $req, $id, SlaService $sla)
 
     // Validasi kombinasi aset & kategori (sama seperti store)
     if ($data['kategori'] !== 'LAINNYA' && !$isUnlisted && empty($data['asset_id'])) {
-        return back()->withInput()->withErrors(['asset_id'=>'Pilih aset atau centang "Aset belum terdaftar".']);
+        return back()->withErrors(['asset_id'=>'Pilih aset atau centang "Aset belum terdaftar".'])->withInput();
     }
     if ($data['kategori'] === 'LAINNYA') {
         if (empty($data['assignee_id'])) {
-            return back()->withInput()->withErrors(['assignee_id'=>'Kategori LAINNYA wajib memilih Penanggung Jawab.']);
+            return back()->withErrors(['assignee_id'=>'Kategori LAINNYA wajib memilih Penanggung Jawab.'])->withInput();
         }
         if (empty($data['asset_nama_manual']) || empty($data['asset_lokasi_manual'])) {
-            return back()->withInput()->withErrors(['asset_nama_manual'=>'Nama & lokasi aset wajib diisi.']);
+            return back()->withErrors(['asset_nama_manual'=>'Nama & lokasi aset wajib diisi.'])->withInput();
         }
     }
     if ($isUnlisted && (empty($data['asset_nama_manual']) || empty($data['asset_lokasi_manual']))) {
-        return back()->withInput()->withErrors(['asset_nama_manual'=>'Nama & lokasi aset wajib diisi bila aset belum terdaftar.']);
+        return back()->withErrors(['asset_nama_manual'=>'Nama & lokasi aset wajib diisi bila aset belum terdaftar.'])->withInput();
     }
 
     // Tentukan PJ/divisi (boleh kosong kecuali LAINNYA)
@@ -339,12 +355,12 @@ public function update(Request $req, $id, SlaService $sla)
     if (!empty($data['assignee_id'])) {
         $assignee = User::find($data['assignee_id']);
         if (!$assignee || $assignee->role !== User::ROLE_PJ || empty($assignee->divisi)) {
-            return back()->withInput()->withErrors(['assignee_id'=>'Penanggung Jawab tidak valid.']);
+            return back()->withErrors(['assignee_id'=>'Penanggung Jawab tidak valid.'])->withInput();
         }
         $divisiPj = $assignee->divisi;
     } else {
         if ($data['kategori'] === 'LAINNYA') {
-            return back()->withInput()->withErrors(['assignee_id'=>'Kategori LAINNYA wajib memilih Penanggung Jawab.']);
+            return back()->withErrors(['assignee_id'=>'Kategori LAINNYA wajib memilih Penanggung Jawab.'])->withInput();
         }
         // default divisi = kategori
         $divisiPj = $data['kategori'];
