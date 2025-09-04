@@ -117,4 +117,78 @@ class AssetWebController extends Controller
 
         return redirect()->route('assets.index')->with('ok','Aset dihapus.');
     }
+public function peek($id)
+{
+    $asset = Asset::with([
+        'category:id,nama',
+        'location:id,nama',
+        'vendor:id,nama',
+    ])->findOrFail($id);
+
+    $tickets = $asset->tickets()
+        ->orderByDesc('created_at')
+        ->limit(10)
+        ->get(['id','kode_tiket','judul','status','urgensi','created_at','sla_due_at'])
+        ->map(function($t){
+            return [
+                'id'         => $t->id,
+                'kode'       => $t->kode_tiket,
+                'judul'      => $t->judul,
+                'status'     => $t->status,
+                'urgensi'    => $t->urgensi,
+                'created_at' => optional($t->created_at)->format('d/m/Y H:i'),
+                'deadline'   => optional($t->sla_due_at)->format('d/m/Y H:i'),
+                'url'        => route('tickets.show', $t->id),
+            ];
+        });
+
+    // === PATCH: ambil judul dari tiket terkait ===
+    $workOrders = method_exists($asset, 'workOrders')
+        ? $asset->workOrders()
+            ->with('ticket:id,judul')                    // judul dari tiket
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get(['id','kode_wo','ticket_id','status','created_at'])
+            ->map(function($w){
+                return [
+                    'id'         => $w->id,
+                    'kode'       => $w->kode_wo ?? ('WO-'.$w->id),
+                    'judul'      => optional($w->ticket)->judul ?? '-',  // diambil dari tiket
+                    'status'     => $w->status ?? '-',
+                    'created_at' => optional($w->created_at)->format('d/m/Y H:i'),
+                    'url'        => $w->ticket_id ? route('tickets.show', $w->ticket_id) : '#',
+                ];
+            })
+        : collect();
+
+    return response()->json([
+        'asset' => [
+            'id'           => $asset->id,
+            'kode_aset'    => $asset->kode_aset,
+            'nama'         => $asset->nama,
+            'kategori'     => optional($asset->category)->nama,
+            'lokasi'       => optional($asset->location)->nama,
+            'vendor'       => optional($asset->vendor)->nama,
+            'status'       => $asset->status,
+            'tanggal_beli' => optional($asset->tanggal_beli)->format('d/m/Y'),
+        ],
+        'tickets'     => $tickets,
+        'work_orders' => $workOrders,
+    ], 200);
+}
+
+public function print($id)
+{
+$asset = Asset::with([
+    'category:id,nama',
+    'location:id,nama',
+    'vendor:id,nama',
+    'tickets' => fn($q) => $q->orderByDesc('created_at')->limit(200),
+    'workOrders' => fn($q) => $q->orderByDesc('created_at')->limit(200),
+    'workOrders.ticket:id,judul', // <— tambahkan ini
+])->findOrFail($id);
+
+    return view('assets.print', compact('asset'));
+}
+
 }
