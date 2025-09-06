@@ -63,13 +63,13 @@ class UserWebController extends Controller
         $this->authorizeSuperadmin();
 
         $data = $req->validate([
-            'name'   => 'required|string|max:120',
-            'email'  => 'required|email:rfc,dns|unique:users,email',
-            'password' => 'required|string|min:6',
-            'role'   => 'required|in:SUPERADMIN,PJ,USER',
-            'divisi' => 'nullable|in:IT,PRODUKSI,GA',
-            'no_wa'  => 'nullable|string|max:30',
-            'aktif'  => 'sometimes|boolean',
+        'name'   => 'required|string|max:120',
+        'email'  => 'required|email:rfc,dns|unique:users,email',
+        'password' => 'required|string|min:6|confirmed', // <-- tambahkan confirmed
+        'role'   => 'required|in:SUPERADMIN,PJ,USER',
+        'divisi' => 'nullable|in:IT,PRODUKSI,GA',
+        'no_wa'  => 'nullable|regex:/^0[0-9]{9,14}$/', // angka, mulai 0, 10-15 digit
+        'aktif'  => 'sometimes|boolean',
         ]);
 
         // PJ wajib punya divisi
@@ -107,13 +107,13 @@ class UserWebController extends Controller
         $user = User::findOrFail($id);
 
         $data = $req->validate([
-            'name'   => 'required|string|max:120',
-            'email'  => 'required|email:rfc,dns|unique:users,email,'.$user->id,
-            'password' => 'nullable|string|min:6',
-            'role'   => 'required|in:SUPERADMIN,PJ,USER',
-            'divisi' => 'nullable|in:IT,PRODUKSI,GA',
-            'no_wa'  => 'nullable|string|max:30',
-            'aktif'  => 'sometimes|boolean',
+        'name'   => 'required|string|max:120',
+        'email'  => 'required|email:rfc,dns|unique:users,email,'.$user->id,
+        'password' => 'nullable|string|min:6|confirmed', // <-- tambahkan confirmed
+        'role'   => 'required|in:SUPERADMIN,PJ,USER',
+        'divisi' => 'nullable|in:IT,PRODUKSI,GA',
+        'no_wa'  => 'nullable|regex:/^0[0-9]{9,14}$/',
+        'aktif'  => 'sometimes|boolean',
         ]);
 
         if ($data['role'] === 'PJ' && empty($data['divisi'])) {

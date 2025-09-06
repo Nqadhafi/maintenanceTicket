@@ -39,12 +39,8 @@ class ReportWebController extends Controller
         // Tanggal (created_at)
         $from = $req->query('date_from');
         $to   = $req->query('date_to');
-        if ($from) {
-            $q->where('created_at', '>=', Carbon::parse($from)->startOfDay());
-        }
-        if ($to) {
-            $q->where('created_at', '<=', Carbon::parse($to)->endOfDay());
-        }
+        if ($from) $q->where('created_at', '>=', Carbon::parse($from)->startOfDay());
+        if ($to)   $q->where('created_at', '<=', Carbon::parse($to)->endOfDay());
 
         // RBAC scope
         if ($user->role === User::ROLE_SUPERADMIN) {
@@ -55,11 +51,69 @@ class ReportWebController extends Controller
             $q->where('user_id', $user->id);
         }
 
+        // ===== Ringkasan (berdasarkan filter saat ini) =====
+        $base = clone $q;
+
+        $summary = [
+            'total'   => (clone $base)->count(),
+            'status'  => collect($this->status)->mapWithKeys(
+                fn($s) => [$s => (clone $base)->where('status', $s)->count()]
+            )->all(),
+            'overdue' => (clone $base)
+                ->whereNotIn('status', ['RESOLVED','CLOSED'])
+                ->whereNotNull('sla_due_at')
+                ->where('sla_due_at', '<', now())
+                ->count(),
+            'due_today' => (clone $base)
+                ->whereNotIn('status', ['RESOLVED','CLOSED'])
+                ->whereNotNull('sla_due_at')
+                ->whereBetween('sla_due_at', [now()->startOfDay(), now()->endOfDay()])
+                ->count(),
+        ];
+
         $tickets = $q->orderByDesc('created_at')->paginate(25)->withQueryString();
 
         // Dropdown assignee (opsional)
         $pjList = User::where('role','PJ')->where('aktif',true)
             ->orderBy('name')->get(['id','name','divisi']);
+
+        // ===== Chart data (mengikuti filter & RBAC yang sama) =====
+$chartBase = clone $base;
+
+// 1) Tren 14 hari terakhir (kalau user tidak set range)
+$rangeFrom = $from ? Carbon::parse($from)->startOfDay() : now()->subDays(13)->startOfDay();
+$rangeTo   = $to   ? Carbon::parse($to)->endOfDay()   : now()->endOfDay();
+
+$trendRows = (clone $chartBase)
+    ->whereBetween('created_at', [$rangeFrom, $rangeTo])
+    ->selectRaw('DATE(created_at) d, COUNT(*) c')
+    ->groupBy('d')
+    ->orderBy('d')
+    ->pluck('c','d')
+    ->all();
+
+// normalize ke rentang tanggal supaya tidak ada “lubang”
+$labels = [];
+$series = [];
+for ($d = $rangeFrom->copy(); $d <= $rangeTo; $d->addDay()) {
+    $key = $d->toDateString();
+    $labels[] = $d->format('d M');
+    $series[] = $trendRows[$key] ?? 0;
+}
+
+// 2) Distribusi urgensi (untuk donut/legend kecil)
+$urgensiCounts = (clone $chartBase)
+    ->selectRaw('urgensi, COUNT(*) c')
+    ->groupBy('urgensi')
+    ->pluck('c','urgensi')
+    ->all();
+
+$chart = [
+    'trend' => ['labels' => $labels, 'series' => $series],
+    'status' => array_map(fn($s) => $summary['status'][$s] ?? 0, $this->status),
+    'statusLabels' => array_map(fn($s) => ucfirst(strtolower(str_replace('_',' ',$s))), $this->status),
+    'urgensi' => $urgensiCounts,
+];
 
         return view('reports.tickets', [
             'tickets' => $tickets,
@@ -78,6 +132,9 @@ class ReportWebController extends Controller
             'status'   => $this->status,
             'divisi'   => $this->divisi,
             'pjList'   => $pjList,
+            'summary'  => $summary,
+            'chart' => $chart,
+'range' => ['from' => $rangeFrom, 'to' => $rangeTo],
         ]);
     }
 
@@ -116,7 +173,7 @@ class ReportWebController extends Controller
             $q->where('user_id', $user->id);
         }
 
-        $fileName = 'tickets_'.now()->format('Ymd_His').'.csv';
+        $fileName = 'laporan_tiket_'.now()->format('Ymd_His').'.csv';
 
         return response()->streamDownload(function () use ($q) {
             $out = fopen('php://output', 'w');
@@ -124,8 +181,8 @@ class ReportWebController extends Controller
             fwrite($out, "\xEF\xBB\xBF");
             // Header
             fputcsv($out, [
-                'Kode', 'Dibuat', 'Kategori', 'Divisi PJ', 'Urgensi', 'Status',
-                'Judul', 'Pelapor', 'PJ', 'SLA Due', 'Closed At'
+                'Kode', 'Dibuat', 'Kategori', 'Divisi PJ', 'Prioritas', 'Status',
+                'Judul', 'Pelapor', 'PJ', 'Deadline', 'Waktu Ditutup'
             ]);
 
             $q->orderBy('created_at')->chunk(500, function($rows) use ($out) {
