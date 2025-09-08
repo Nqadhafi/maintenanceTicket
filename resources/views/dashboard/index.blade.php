@@ -48,13 +48,6 @@
       <a href="{{ route('reports.tickets') }}" class="icon-tile" aria-label="Laporan">
         <div class="ic">📊</div><div class="tx">Laporan</div>
       </a>
-    @else
-      <a href="{{ route('dashboard') }}" class="icon-tile" aria-label="Ringkasan">
-        <div class="ic">📄</div><div class="tx">Ringkasan</div>
-      </a>
-      <a href="{{ route('tickets.index') }}" class="icon-tile" aria-label="Prioritas">
-        <div class="ic">⭐</div><div class="tx">Prioritas</div>
-      </a>
     @endif
   </div>
 </div>
@@ -121,13 +114,16 @@
           $createdStr  = optional($t->created_at)->format('d/m H:i');
           $urlShow     = route('tickets.show', $t->id);
 
-          // Aset (skema: kode_aset, nama, relasi: location/vendor/category punya nama/nama)
+          // Aset
           $asset       = optional($t->asset);
+          $assetName   = $asset->nama ?? $asset->name ?? '';
           $assetTag    = $asset->kode_aset ?? '';
-          $assetName   = $asset->nama ?? '';
           $assetLoc    = optional($asset->location)->nama ?? optional($asset->location)->name ?? '';
           $assetVendor = optional($asset->vendor)->nama   ?? optional($asset->vendor)->name   ?? '';
           $assetCat    = optional($asset->category)->nama ?? optional($asset->category)->name ?? '';
+
+          // Pelapor
+          $pelaporName = optional($t->pelapor)->name ?? '';
         @endphp
 
         <div
@@ -145,15 +141,21 @@
           data-status="{{ $t->status }}"
           data-divisi="{{ $t->divisi_pj ?? '' }}"
           data-pj="{{ optional($t->assignee)->name ?? '' }}"
+          data-pelapor="{{ $pelaporName }}"
           data-created="{{ $createdStr }}"
-          data-asset-tag="{{ $assetTag }}"
           data-asset-name="{{ $assetName }}"
+          data-asset-tag="{{ $assetTag }}"
           data-asset-loc="{{ $assetLoc }}"
           data-asset-vendor="{{ $assetVendor }}"
           data-asset-cat="{{ $assetCat }}"
         >
           <div class="bar">
-            <div class="font-medium">
+            <div class="font-medium truncate">
+              {{-- Tampilkan nama aset bila ada, untuk konteks yang cepat terbaca --}}
+              @if($assetName)
+                <span class="text-gray-700">{{ $assetName }}</span>
+                <span class="text-gray-400">•</span>
+              @endif
               <span class="underline">{{ $t->kode_tiket }}</span>
               <span class="text-gray-500">— {{ $t->judul }}</span>
             </div>
@@ -166,17 +168,27 @@
           </div>
 
           <div class="flex items-center gap-2 mt-2 flex-wrap">
-            <span class="chip">{{ $t->kategori }}</span>
+            {{-- Kelompok label penting di depan --}}
             <span class="chip ug-{{ $t->urgensi }}">{{ $t->urgensi }}</span>
             <span class="chip st-{{ $t->status }}">{{ $t->status }}</span>
-            @if($t->divisi_pj)
-              <span class="chip">Divisi: {{ $t->divisi_pj }}</span>
+            <span class="chip">{{ $t->kategori }}</span>
+
+            {{-- Identitas manusia: Pelapor & PJ --}}
+            @if($pelaporName)
+              <span class="chip">Pelapor: {{ $pelaporName }}</span>
             @endif
             @if($t->assignee)
               <span class="chip">PJ: {{ $t->assignee->name }}</span>
             @endif
-            @if($assetTag || $assetName)
-              <span class="chip">Aset: {{ $assetTag ?: $assetName }}</span>
+
+            {{-- Konteks organisasi & aset --}}
+            @if($t->divisi_pj)
+              <span class="chip">Divisi: {{ $t->divisi_pj }}</span>
+            @endif
+            @if($assetName)
+              <span class="chip">Aset: {{ $assetName }}</span>
+            @elseif($assetTag)
+              <span class="chip tone-muted">Aset: {{ $assetTag }}</span>
             @endif
           </div>
         </div>
@@ -188,12 +200,12 @@
 {{-- ===== Modal Ringkas Tiket ===== --}}
 <div id="ticketModal" class="fixed inset-0 hidden z-50" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Ringkasan tiket">
   <div class="absolute inset-0 bg-black/40" data-close></div>
-  <div class="relative max-w-lg mx-auto mt-24 px-4">
+  <div class="relative max-w-xl mx-auto mt-24 px-4">
     <div class="card">
       <div class="bar">
-        <div>
-          <div id="m_kode" class="text-sm text-gray-500">#TIKET</div>
-          <h2 id="m_judul" class="text-lg font-semibold">Judul tiket</h2>
+        <div class="min-w-0">
+          <div id="m_kode" class="text-sm text-gray-500 truncate">#TIKET</div>
+          <h2 id="m_judul" class="text-lg font-semibold leading-snug break-words">Judul tiket</h2>
         </div>
         <button class="btn btn-outline" data-close aria-label="Tutup">✕</button>
       </div>
@@ -215,6 +227,9 @@
           <div class="text-gray-500">Status</div>
           <div class="col-span-2"><span id="m_status" class="chip">—</span></div>
 
+          <div class="text-gray-500">Pelapor</div>
+          <div class="col-span-2" id="m_pelapor">—</div>
+
           <div class="text-gray-500">PJ</div>
           <div class="col-span-2" id="m_pj">—</div>
 
@@ -229,9 +244,11 @@
           <div class="text-gray-500">Aset</div>
           <div class="col-span-2">
             <div class="flex items-center gap-2 flex-wrap">
-              <span id="m_asset_tag" class="chip">—</span>
+              {{-- Nama aset sebagai informasi utama --}}
               <span id="m_asset_name" class="chip">—</span>
+              {{-- Informasi pendukung aset dimutihkan --}}
               <span id="m_asset_cat" class="chip tone-muted">—</span>
+              <span id="m_asset_tag" class="chip tone-muted">—</span>
             </div>
           </div>
 
@@ -268,10 +285,11 @@
     kategori: document.getElementById('m_kategori'),
     urgensi:  document.getElementById('m_urgensi'),
     status:   document.getElementById('m_status'),
+    pelapor:  document.getElementById('m_pelapor'),
     pj:       document.getElementById('m_pj'),
     divisi:   document.getElementById('m_divisi'),
-    aTag:     document.getElementById('m_asset_tag'),
     aName:    document.getElementById('m_asset_name'),
+    aTag:     document.getElementById('m_asset_tag'),
     aLoc:     document.getElementById('m_asset_loc'),
     aVendor:  document.getElementById('m_asset_vendor'),
     aCat:     document.getElementById('m_asset_cat'),
@@ -294,10 +312,15 @@
     const row = e.target.closest('.js-ticket-row');
     if (!row) return;
 
+    // Teks ringkas di header
     els.kode.textContent     = '#' + (row.dataset.kode || '');
     els.judul.textContent    = row.dataset.judul || '';
+
+    // Baris waktu
     els.created.textContent  = row.dataset.created || '—';
     els.deadline.textContent = row.dataset.deadline || '—';
+
+    // Label kategori/urgensi/status
     els.kategori.textContent = row.dataset.kategori || '—';
 
     els.urgensi.textContent  = row.dataset.urgensi || '—';
@@ -306,15 +329,20 @@
     els.status.textContent   = row.dataset.status || '—';
     els.status.className     = 'chip ' + (row.dataset.status ? ('st-' + row.dataset.status) : 'tone-muted');
 
+    // Identitas
+    els.pelapor.textContent  = row.dataset.pelapor || '—';
     els.pj.textContent       = row.dataset.pj || '—';
     els.divisi.textContent   = row.dataset.divisi || '—';
 
-    // Aset
-    els.aTag.textContent     = row.dataset.assetTag  || '—';
-    els.aName.textContent    = row.dataset.assetName || '—';
-    els.aCat.textContent     = row.dataset.assetCat  || '—';
-    els.aLoc.textContent     = row.dataset.assetLoc  || '—';
-    els.aVendor.textContent  = row.dataset.assetVendor || '—';
+    // Aset — nama prioritas, tag/kategori sebagai info pendukung
+    const aName   = row.dataset.assetName || '';
+    const aTag    = row.dataset.assetTag || '';
+    const aCat    = row.dataset.assetCat || '';
+    els.aName.textContent = aName || '—';
+    els.aTag.textContent  = aTag || '—';
+    els.aCat.textContent  = aCat || '—';
+    els.aLoc.textContent  = row.dataset.assetLoc || '—';
+    els.aVendor.textContent = row.dataset.assetVendor || '—';
 
     if (detailLink) detailLink.href = row.dataset.url || '#';
     openModal();

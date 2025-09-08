@@ -247,12 +247,6 @@
            aria-current="{{ request()->routeIs('reports.tickets') ? 'page' : 'false' }}">
           <span class="ic">📊</span><span class="tx">Laporan</span>
         </a>
-      @else
-        <a href="{{ route('assets.index') }}"
-           class="tab"
-           aria-current="{{ request()->routeIs('assets.*') ? 'page' : 'false' }}">
-          <span class="ic">🗂️</span><span class="tx">Aset</span>
-        </a>
       @endif
 
       <form method="POST" action="{{ route('logout') }}" class="tab p-0 m-0">
