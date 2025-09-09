@@ -73,6 +73,23 @@
                aria-current="{{ request()->routeIs('reports.tickets') ? 'page' : 'false' }}">Laporan</a>
           @endif
 
+          {{-- Maintenance (PM & WO) --}}
+          @if(in_array((auth()->user()->role ?? null), ['PJ','SUPERADMIN'], true))
+            <a href="{{ route('wo.index') }}"
+               class="btn btn-outline"
+               aria-current="{{ request()->routeIs('wo.*') ? 'page' : 'false' }}">WO</a>
+
+            <details class="relative">
+              <summary class="btn btn-outline {{ (request()->routeIs('pm.plans.*') || request()->routeIs('pm.schedules.*') || request()->routeIs('pm.exec.*')) ? 'bg-black text-white border-black' : '' }}">
+                PM
+              </summary>
+              <div class="absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow z-10 py-1">
+                <a href="{{ route('pm.plans.index') }}" class="block px-3 py-2 hover:bg-gray-50 {{ request()->routeIs('pm.plans.*') ? 'font-semibold' : '' }}">Rencana (Plans)</a>
+                <a href="{{ route('pm.schedules.index') }}" class="block px-3 py-2 hover:bg-gray-50 {{ request()->routeIs('pm.schedules.*') ? 'font-semibold' : '' }}">Jadwal (Schedules)</a>
+              </div>
+            </details>
+          @endif
+
           @if((auth()->user()->role ?? null) === 'SUPERADMIN')
             <details class="relative">
               <summary class="btn btn-outline {{ (request()->routeIs('master.*')||request()->routeIs('settings.sla.*')||request()->routeIs('admin.users.*')) ? 'bg-black text-white border-black' : '' }}">
@@ -119,6 +136,21 @@
         @if(in_array((auth()->user()->role ?? null), ['PJ','SUPERADMIN'], true))
           <a href="{{ route('assets.index') }}" class="btn btn-outline btn-block {{ request()->routeIs('assets.*') ? 'bg-black text-white border-black' : '' }}" aria-current="{{ request()->routeIs('assets.*') ? 'page' : 'false' }}">Aset</a>
           <a href="{{ route('reports.tickets') }}" class="btn btn-outline btn-block {{ request()->routeIs('reports.tickets') ? 'bg-black text-white border-black' : '' }}" aria-current="{{ request()->routeIs('reports.tickets') ? 'page' : 'false' }}">Laporan</a>
+        @endif
+
+        {{-- WO & PM --}}
+        @if(in_array((auth()->user()->role ?? null), ['PJ','SUPERADMIN'], true))
+          <a href="{{ route('wo.index') }}"
+             class="btn btn-outline btn-block {{ request()->routeIs('wo.*') ? 'bg-black text-white border-black' : '' }}"
+             aria-current="{{ request()->routeIs('wo.*') ? 'page' : 'false' }}">Work Orders</a>
+
+          <div class="px-1 text-gray-500 mt-1">Preventive Maintenance</div>
+          <a href="{{ route('pm.plans.index') }}"
+             class="btn btn-outline btn-block {{ request()->routeIs('pm.plans.*') ? 'bg-black text-white border-black' : '' }}"
+             aria-current="{{ request()->routeIs('pm.plans.*') ? 'page' : 'false' }}">Rencana (Plans)</a>
+          <a href="{{ route('pm.schedules.index') }}"
+             class="btn btn-outline btn-block {{ request()->routeIs('pm.schedules.*') ? 'bg-black text-white border-black' : '' }}"
+             aria-current="{{ request()->routeIs('pm.schedules.*') ? 'page' : 'false' }}">Jadwal (Schedules)</a>
         @endif
 
         @if((auth()->user()->role ?? null) === 'SUPERADMIN')
@@ -170,6 +202,21 @@
       'master.asset_categories.index' => 'Kategori Aset',
       'master.locations.index'        => 'Lokasi',
       'master.vendors.index'          => 'Vendor',
+
+      // Work Orders
+      'wo.index'   => 'Work Orders',
+      'wo.create'  => 'Buat Work Order',
+      'wo.show'    => 'Detail Work Order',
+      'wo.edit'    => 'Ubah Work Order',
+
+      // Preventive Maintenance
+      'pm.plans.index'      => 'Rencana PM',
+      'pm.plans.create'     => 'Tambah Rencana PM',
+      'pm.plans.edit'       => 'Ubah Rencana PM',
+      'pm.schedules.index'  => 'Jadwal PM',
+      'pm.schedules.create' => 'Tambah Jadwal PM',
+      'pm.schedules.edit'   => 'Ubah Jadwal PM',
+      'pm.exec.create'      => 'Eksekusi PM',
     ];
     $autoTitle = $defaultTitleMap[$routeName] ?? ($title ?? null);
     $pageTitle = trim($__env->yieldContent('page_title', $autoTitle));
@@ -242,6 +289,13 @@
       <div></div> {{-- spacer for center fab/notch --}}
 
       @if($isAdmin)
+        {{-- WO tab --}}
+        <a href="{{ route('wo.index') }}"
+           class="tab"
+           aria-current="{{ request()->routeIs('wo.*') ? 'page' : 'false' }}">
+          <span class="ic">🛠️</span><span class="tx">WO</span>
+        </a>
+
         <a href="{{ route('reports.tickets') }}"
            class="tab"
            aria-current="{{ request()->routeIs('reports.tickets') ? 'page' : 'false' }}">

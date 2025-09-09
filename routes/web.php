@@ -86,4 +86,39 @@ Route::middleware(['auth'])->group(function () {
     // Reports
     Route::get('/reports/tickets', [ReportWebController::class, 'tickets'])->name('reports.tickets');
     Route::get('/reports/tickets/export', [ReportWebController::class, 'exportTickets'])->name('reports.tickets.export');
+
+        // ==== PM Plans
+    Route::get('/pm/plans',             [\App\Http\Controllers\Web\PmPlanWebController::class, 'index'])->name('pm.plans.index');
+    Route::get('/pm/plans/create',      [\App\Http\Controllers\Web\PmPlanWebController::class, 'create'])->name('pm.plans.create');
+    Route::post('/pm/plans',            [\App\Http\Controllers\Web\PmPlanWebController::class, 'store'])->name('pm.plans.store');
+    Route::get('/pm/plans/{id}/edit',   [\App\Http\Controllers\Web\PmPlanWebController::class, 'edit'])->name('pm.plans.edit');
+    Route::put('/pm/plans/{id}',        [\App\Http\Controllers\Web\PmPlanWebController::class, 'update'])->name('pm.plans.update');
+    Route::delete('/pm/plans/{id}',     [\App\Http\Controllers\Web\PmPlanWebController::class, 'destroy'])->name('pm.plans.destroy');
+
+    // ==== PM Schedules
+    Route::get('/pm/schedules',             [\App\Http\Controllers\Web\PmScheduleWebController::class, 'index'])->name('pm.schedules.index');
+    Route::get('/pm/schedules/create',      [\App\Http\Controllers\Web\PmScheduleWebController::class, 'create'])->name('pm.schedules.create');
+    Route::post('/pm/schedules',            [\App\Http\Controllers\Web\PmScheduleWebController::class, 'store'])->name('pm.schedules.store');
+    Route::get('/pm/schedules/{id}/edit',   [\App\Http\Controllers\Web\PmScheduleWebController::class, 'edit'])->name('pm.schedules.edit');
+    Route::put('/pm/schedules/{id}',        [\App\Http\Controllers\Web\PmScheduleWebController::class, 'update'])->name('pm.schedules.update');
+    Route::delete('/pm/schedules/{id}',     [\App\Http\Controllers\Web\PmScheduleWebController::class, 'destroy'])->name('pm.schedules.destroy');
+
+    // ==== PM Executions
+    Route::get('/pm/schedules/{scheduleId}/exec/create',  [\App\Http\Controllers\Web\PmExecutionWebController::class, 'create'])->name('pm.exec.create');
+    Route::post('/pm/schedules/{scheduleId}/exec',        [\App\Http\Controllers\Web\PmExecutionWebController::class, 'store'])->name('pm.exec.store');
+
+    // ==== Work Orders
+    Route::get('/wo',               [\App\Http\Controllers\Web\WorkOrderWebController::class, 'index'])->name('wo.index');
+    Route::get('/wo/create',        [\App\Http\Controllers\Web\WorkOrderWebController::class, 'create'])->name('wo.create');
+    Route::post('/wo',              [\App\Http\Controllers\Web\WorkOrderWebController::class, 'store'])->name('wo.store');
+    Route::get('/wo/{id}',          [\App\Http\Controllers\Web\WorkOrderWebController::class, 'show'])->name('wo.show');
+    Route::get('/wo/{id}/edit',     [\App\Http\Controllers\Web\WorkOrderWebController::class, 'edit'])->name('wo.edit');
+    Route::put('/wo/{id}',          [\App\Http\Controllers\Web\WorkOrderWebController::class, 'update'])->name('wo.update');
+    Route::delete('/wo/{id}',       [\App\Http\Controllers\Web\WorkOrderWebController::class, 'destroy'])->name('wo.destroy');
+
+    Route::post('/wo/{id}/items',        [\App\Http\Controllers\Web\WorkOrderWebController::class, 'addItem'])->name('wo.items.add');
+    Route::delete('/wo/{id}/items/{it}', [\App\Http\Controllers\Web\WorkOrderWebController::class, 'removeItem'])->name('wo.items.remove');
+    Route::post('/wo/{id}/start',        [\App\Http\Controllers\Web\WorkOrderWebController::class, 'start'])->name('wo.start');
+    Route::post('/wo/{id}/done',         [\App\Http\Controllers\Web\WorkOrderWebController::class, 'done'])->name('wo.done');
+
 });

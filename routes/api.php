@@ -36,7 +36,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/asset-categories', [AssetCategoryController::class, 'index']);
     Route::get('/locations', [LocationController::class, 'index']);
     Route::get('/vendors', [VendorController::class, 'index']);
-    Route::apiResource('assets', AssetController::class)->only(['index','store','show','update','destroy']);
+Route::apiResource('assets', \App\Http\Controllers\AssetController::class)
+     ->names('api.assets');
 
     // SLA
     Route::get('/settings/sla', [SlaController::class, 'index']);
