@@ -114,6 +114,45 @@
 
   {{-- ===== Info Grid ===== --}}
   <div class="grid md:grid-cols-2 gap-3">
+        {{-- Aset terkait (card ikut highlight) --}}
+    <div class="card card-accent">
+      <div class="font-medium mb-2">Aset</div>
+
+      @if ($asset)
+        <div class="stack text-sm">
+          <div class="flex items-center gap-2 flex-wrap">
+            @if($assetKode)<span class="chip">{{ $assetKode }}</span>@endif
+            @if($assetNama)<span class="chip tone-muted">{{ $assetNama }}</span>@endif
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <div class="text-gray-500">Kategori</div>
+            <div class="col-span-2">{{ $assetKategori ?: '—' }}</div>
+
+            <div class="text-gray-500">Lokasi</div>
+            <div class="col-span-2">{{ $assetLokasi ?: '—' }}</div>
+
+            <div class="text-gray-500">Vendor</div>
+            <div class="col-span-2">{{ $assetVendor ?: '—' }}</div>
+          </div>
+        </div>
+      @elseif($ticket->is_asset_unlisted || $ticket->kategori==='LAINNYA')
+        <div class="stack text-sm">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="chip">{{ $ticket->asset_nama_manual ?: 'Aset tidak tercatat' }}</span>
+            @if($ticket->asset_vendor_manual)
+              <span class="chip tone-muted">Vendor/Merk: {{ $ticket->asset_vendor_manual }}</span>
+            @endif
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="text-gray-500">Lokasi</div>
+            <div class="col-span-2">{{ $ticket->asset_lokasi_manual ?: '—' }}</div>
+          </div>
+        </div>
+      @else
+        <div class="text-sm text-gray-500">—</div>
+      @endif
+    </div>
     {{-- Aksi & Penugasan (card ikut highlight) --}}
     <div class="card card-accent">
       <div class="font-medium mb-2">Aksi</div>
@@ -166,45 +205,7 @@
       </div>
     </div>
 
-    {{-- Aset terkait (card ikut highlight) --}}
-    <div class="card card-accent">
-      <div class="font-medium mb-2">Aset</div>
 
-      @if ($asset)
-        <div class="stack text-sm">
-          <div class="flex items-center gap-2 flex-wrap">
-            @if($assetKode)<span class="chip">{{ $assetKode }}</span>@endif
-            @if($assetNama)<span class="chip tone-muted">{{ $assetNama }}</span>@endif
-          </div>
-
-          <div class="grid grid-cols-3 gap-2">
-            <div class="text-gray-500">Kategori</div>
-            <div class="col-span-2">{{ $assetKategori ?: '—' }}</div>
-
-            <div class="text-gray-500">Lokasi</div>
-            <div class="col-span-2">{{ $assetLokasi ?: '—' }}</div>
-
-            <div class="text-gray-500">Vendor</div>
-            <div class="col-span-2">{{ $assetVendor ?: '—' }}</div>
-          </div>
-        </div>
-      @elseif($ticket->is_asset_unlisted || $ticket->kategori==='LAINNYA')
-        <div class="stack text-sm">
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="chip">{{ $ticket->asset_nama_manual ?: 'Aset tidak tercatat' }}</span>
-            @if($ticket->asset_vendor_manual)
-              <span class="chip tone-muted">Vendor/Merk: {{ $ticket->asset_vendor_manual }}</span>
-            @endif
-          </div>
-          <div class="grid grid-cols-3 gap-2">
-            <div class="text-gray-500">Lokasi</div>
-            <div class="col-span-2">{{ $ticket->asset_lokasi_manual ?: '—' }}</div>
-          </div>
-        </div>
-      @else
-        <div class="text-sm text-gray-500">—</div>
-      @endif
-    </div>
   </div>
 
   {{-- ===== Komentar & Lampiran (card ikut highlight) ===== --}}
