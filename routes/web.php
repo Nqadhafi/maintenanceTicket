@@ -11,6 +11,7 @@ use App\Http\Controllers\Web\UserWebController;
 use App\Http\Controllers\Web\ReportWebController;
 use App\Http\Controllers\Web\DashboardWebController;
 use App\Http\Controllers\Web\AssetLookupController;
+use App\Http\Controllers\Web\ProfileWebController;
 
 require __DIR__.'/auth.php'; // route login/logout dari Breeze (Blade)
 
@@ -120,5 +121,12 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/wo/{id}/items/{it}', [\App\Http\Controllers\Web\WorkOrderWebController::class, 'removeItem'])->name('wo.items.remove');
     Route::post('/wo/{id}/start',        [\App\Http\Controllers\Web\WorkOrderWebController::class, 'start'])->name('wo.start');
     Route::post('/wo/{id}/done',         [\App\Http\Controllers\Web\WorkOrderWebController::class, 'done'])->name('wo.done');
+
+    Route::get('/me',              [ProfileWebController::class, 'show'])->name('profile.show');
+    Route::get('/me/edit',         [ProfileWebController::class, 'edit'])->name('profile.edit');
+    Route::put('/me',              [ProfileWebController::class, 'update'])->name('profile.update');
+
+    Route::get('/me/password',     [ProfileWebController::class, 'editPassword'])->name('profile.password.edit');
+    Route::put('/me/password',     [ProfileWebController::class, 'updatePassword'])->name('profile.password.update');
 
 });

@@ -142,10 +142,39 @@ class TicketWebController extends Controller
 
         // WA best-effort
         try {
-            $url = route('tickets.show', $ticket->id);
-            $deadline = $ticket->sla_due_at ? $ticket->sla_due_at->format('d/m/Y H:i') : '-';
-            $msg = "[Tiket #{$ticket->kode_tiket}] {$ticket->kategori}/{$ticket->divisi_pj} • {$ticket->urgensi}\n"
-                 . "Judul: {$ticket->judul}\nSLA: {$deadline}\n{$url}";
+$url       = route('tickets.show', $ticket->id);
+$deadline  = $ticket->sla_due_at->locale('id')->translatedFormat('d M Y H:i') ?? '-';
+$assetName = $ticket->asset->nama ?? ($ticket->asset_nama_manual ?? '-');
+$pelapor   = $user->name ?? '-';
+$pjName    = $assignee->name ?? '-';
+
+// Ikon status & urgensi (biar mudah discan)
+$statusIcon = [
+  'OPEN'        => '🆕',
+  'ASSIGNED'    => '👤',
+  'IN_PROGRESS' => '🛠️',
+  'PENDING'     => '⏸️',
+  'RESOLVED'    => '✅',
+  'CLOSED'      => '🏁',
+][$ticket->status] ?? 'ℹ️';
+
+$urgIcon = [
+  'RENDAH'  => '🟢',
+  'SEDANG'  => '🟡',
+  'TINGGI'  => '🟠',
+  'DARURAT' => '🔴',
+][$ticket->urgensi] ?? '⚪';
+$msg = "🆕 *Notifikasi Tiket Baru - Maintenance Shabat Printing* 🆕\n\n"
+     . "Kode Tiket: [{$ticket->kode_tiket}]\n"
+     . "Judul: {$ticket->judul}\n"
+     . "Kategori/Divisi: {$ticket->kategori} / {$ticket->divisi_pj}\n\n"
+     . "Status: {$statusIcon} {$ticket->status}\n"
+     . "Urgensi: {$urgIcon} {$ticket->urgensi}\n\n"
+     . "Aset: {$assetName}\n"
+     . "Pelapor: {$pelapor}\n"
+     . "Penanggung Jawab: {$pjName}\n"
+     . "Deadline: {$deadline}\n\n"
+     . "Detail: {$url}";
             if (!empty($user->no_wa)) $wa->send($user->no_wa, $msg);
             if ($assignee && !empty($assignee->no_wa)) $wa->send($assignee->no_wa, $msg);
         } catch (\Throwable $e) { report($e); }
@@ -192,9 +221,37 @@ class TicketWebController extends Controller
 
         try {
             $url = route('tickets.show', $ticket->id);
-            $deadline = $ticket->sla_due_at ? $ticket->sla_due_at->format('d/m/Y H:i') : '-';
-            $msg = "[Tiket #{$ticket->kode_tiket}] Status: {$ticket->status}\n"
-                 . "Urgensi: {$ticket->urgensi}\nSLA: {$deadline}\n{$url}";
+            $deadline  = $ticket->sla_due_at->locale('id')->translatedFormat('d M Y') ?? '-';
+            $overdue   = $ticket->sla_due_at && $ticket->sla_due_at->isPast() && !in_array($ticket->status, ['RESOLVED','CLOSED']);
+            $assetName = $ticket->asset->nama ?? ($ticket->asset_nama_manual ?? '-');
+            $pelapor   = $ticket->pelapor->name ?? '-';
+            $pjName    = $ticket->assignee->name ?? '-';
+
+            // Ikon status & urgensi (opsional, bikin pesan lebih “scan-able”)
+            $statusIcon = [
+            'OPEN'        => '🆕',
+            'ASSIGNED'    => '👤',
+            'IN_PROGRESS' => '🛠️',
+            'PENDING'     => '⏸️',
+            'RESOLVED'    => '✅',
+            'CLOSED'      => '🏁',
+            ][$ticket->status] ?? 'ℹ️';
+
+            $urgIcon = [
+            'RENDAH'  => '🟢',
+            'SEDANG'  => '🟡',
+            'TINGGI'  => '🟠',
+            'DARURAT' => '🔴',
+            ][$ticket->urgensi] ?? '⚪';
+            $msg = "ℹ️ *Update Status Tiket - [{$ticket->kode_tiket}]* ℹ️\n \n"
+                . "Keluhan : *{$ticket->judul}*\n"
+                . "Status: {$statusIcon} {$ticket->status}\n"
+                . "Urgensi: {$urgIcon} {$ticket->urgensi}\n \n"
+                . "*Aset: {$assetName}*\n"
+                . "Deadline: {$deadline}" . ($overdue ? " (LEWAT)" : "") ."\n"
+                . "Pelapor: {$pelapor}\n"
+                . "Penanggung Jawab: {$pjName}\n\n"
+                . "Detail: {$url}";
             if ($ticket->pelapor && !empty($ticket->pelapor->no_wa)) $wa->send($ticket->pelapor->no_wa, $msg);
             if ($ticket->assignee && !empty($ticket->assignee->no_wa)) $wa->send($ticket->assignee->no_wa, $msg);
         } catch (\Throwable $e) { report($e); }

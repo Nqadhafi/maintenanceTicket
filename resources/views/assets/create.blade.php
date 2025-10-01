@@ -31,37 +31,47 @@
         @include('partials.field-error', ['field' => 'nama'])
       </div>
 
-      <div>
-        <label class="block text-xs text-gray-600">Kategori</label>
-        <select name="asset_category_id" class="field" required>
-          @foreach($categories as $c)
-            <option value="{{ $c->id }}" @selected(old('asset_category_id')==$c->id)>{{ $c->nama }}</option>
-          @endforeach
-        </select>
-        @include('partials.field-error', ['field' => 'asset_category_id'])
-      </div>
+<div>
+  <label for="asset_category_id" class="block text-xs text-gray-600">Kategori</label>
+  <select id="asset_category_id" name="asset_category_id" class="field" required>
+    @foreach($categories as $c)
+      <option value="{{ $c->id }}"
+        {{ (string) old('asset_category_id') === (string) $c->id ? 'selected' : '' }}>
+        {{ $c->nama }}
+      </option>
+    @endforeach
+  </select>
+  @include('partials.field-error', ['field' => 'asset_category_id'])
+</div>
 
-      <div>
-        <label class="block text-xs text-gray-600">Lokasi (opsional)</label>
-        <select name="location_id" class="field">
-          <option value="">—</option>
-          @foreach($locations as $l)
-            <option value="{{ $l->id }}" @selected(old('location_id')==$l->id)>{{ $l->nama }}</option>
-          @endforeach
-        </select>
-        @include('partials.field-error', ['field' => 'location_id'])
-      </div>
+<div>
+  <label for="location_id" class="block text-xs text-gray-600">Lokasi (opsional)</label>
+  <select id="location_id" name="location_id" class="field">
+    <option value="" {{ in_array(old('location_id'), [null, ''], true) ? 'selected' : '' }}>—</option>
+    @foreach($locations as $l)
+      <option value="{{ $l->id }}"
+        {{ (string) old('location_id') === (string) $l->id ? 'selected' : '' }}>
+        {{ $l->nama }}
+      </option>
+    @endforeach
+  </select>
+  @include('partials.field-error', ['field' => 'location_id'])
+</div>
 
-      <div>
-        <label class="block text-xs text-gray-600">Vendor (opsional)</label>
-        <select name="vendor_id" class="field">
-          <option value="">—</option>
-          @foreach($vendors as $v)
-            <option value="{{ $v->id }}" @selected(old('vendor_id')==$v->id)>{{ $v->nama }}</option>
-          @endforeach
-        </select>
-        @include('partials.field-error', ['field' => 'vendor_id'])
-      </div>
+<div>
+  <label for="vendor_id" class="block text-xs text-gray-600">Vendor (opsional)</label>
+  <select id="vendor_id" name="vendor_id" class="field">
+    <option value="" {{ in_array(old('vendor_id'), [null, ''], true) ? 'selected' : '' }}>—</option>
+    @foreach($vendors as $v)
+      <option value="{{ $v->id }}"
+        {{ (string) old('vendor_id') === (string) $v->id ? 'selected' : '' }}>
+        {{ $v->nama }}
+      </option>
+    @endforeach
+  </select>
+  @include('partials.field-error', ['field' => 'vendor_id'])
+</div>
+
 
       <div>
         <label class="block text-xs text-gray-600">Status</label>

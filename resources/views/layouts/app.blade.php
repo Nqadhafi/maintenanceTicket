@@ -74,7 +74,7 @@
           @endif
 
           {{-- Maintenance (PM & WO) --}}
-          @if(in_array((auth()->user()->role ?? null), ['PJ','SUPERADMIN'], true))
+          {{-- @if(in_array((auth()->user()->role ?? null), ['PJ','SUPERADMIN'], true))
             <a href="{{ route('wo.index') }}"
                class="btn btn-outline"
                aria-current="{{ request()->routeIs('wo.*') ? 'page' : 'false' }}">WO</a>
@@ -88,9 +88,9 @@
                 <a href="{{ route('pm.schedules.index') }}" class="block px-3 py-2 hover:bg-gray-50 {{ request()->routeIs('pm.schedules.*') ? 'font-semibold' : '' }}">Jadwal (Schedules)</a>
               </div>
             </details>
-          @endif
+          @endif --}}
 
-          @if((auth()->user()->role ?? null) === 'SUPERADMIN')
+          @if((auth()->user()->role ?? null) == 'SUPERADMIN')
             <details class="relative">
               <summary class="btn btn-outline {{ (request()->routeIs('master.*')||request()->routeIs('settings.sla.*')||request()->routeIs('admin.users.*')) ? 'bg-black text-white border-black' : '' }}">
                 Admin
@@ -106,10 +106,7 @@
             </details>
           @endif
 
-          <form method="POST" action="{{ route('logout') }}" class="ml-1">
-            @csrf
-            <button class="btn btn-outline">Logout</button>
-          </form>
+<a href="{{ route('profile.show') }}" class="btn btn-outline btn-block">Setting Akun</a>
         </nav>
         @endauth
 
@@ -138,7 +135,7 @@
           <a href="{{ route('reports.tickets') }}" class="btn btn-outline btn-block {{ request()->routeIs('reports.tickets') ? 'bg-black text-white border-black' : '' }}" aria-current="{{ request()->routeIs('reports.tickets') ? 'page' : 'false' }}">Laporan</a>
         @endif
 
-        {{-- WO & PM --}}
+        {{-- WO & PM
         @if(in_array((auth()->user()->role ?? null), ['PJ','SUPERADMIN'], true))
           <a href="{{ route('wo.index') }}"
              class="btn btn-outline btn-block {{ request()->routeIs('wo.*') ? 'bg-black text-white border-black' : '' }}"
@@ -151,9 +148,9 @@
           <a href="{{ route('pm.schedules.index') }}"
              class="btn btn-outline btn-block {{ request()->routeIs('pm.schedules.*') ? 'bg-black text-white border-black' : '' }}"
              aria-current="{{ request()->routeIs('pm.schedules.*') ? 'page' : 'false' }}">Jadwal (Schedules)</a>
-        @endif
+        @endif --}}
 
-        @if((auth()->user()->role ?? null) === 'SUPERADMIN')
+        @if((auth()->user()->role ?? null) == 'SUPERADMIN')
           <div class="px-1 text-gray-500 mt-1">Admin</div>
           <a href="{{ route('master.asset_categories.index') }}" class="btn btn-outline btn-block">Kategori Aset</a>
           <a href="{{ route('master.locations.index') }}" class="btn btn-outline btn-block">Lokasi</a>
@@ -162,10 +159,7 @@
           <a href="{{ route('admin.users.index') }}" class="btn btn-outline btn-block">Users</a>
         @endif
 
-        <form method="POST" action="{{ route('logout') }}" class="mt-2">
-          @csrf
-          <button class="btn btn-outline btn-block">Logout</button>
-        </form>
+      <a href="{{ route('profile.show') }}" class="btn btn-outline btn-block">Setting Akun</a>
       </div>
     </aside>
   </div>
@@ -203,20 +197,20 @@
       'master.locations.index'        => 'Lokasi',
       'master.vendors.index'          => 'Vendor',
 
-      // Work Orders
-      'wo.index'   => 'Work Orders',
-      'wo.create'  => 'Buat Work Order',
-      'wo.show'    => 'Detail Work Order',
-      'wo.edit'    => 'Ubah Work Order',
+      // // Work Orders
+      // 'wo.index'   => 'Work Orders',
+      // 'wo.create'  => 'Buat Work Order',
+      // 'wo.show'    => 'Detail Work Order',
+      // 'wo.edit'    => 'Ubah Work Order',
 
-      // Preventive Maintenance
-      'pm.plans.index'      => 'Rencana PM',
-      'pm.plans.create'     => 'Tambah Rencana PM',
-      'pm.plans.edit'       => 'Ubah Rencana PM',
-      'pm.schedules.index'  => 'Jadwal PM',
-      'pm.schedules.create' => 'Tambah Jadwal PM',
-      'pm.schedules.edit'   => 'Ubah Jadwal PM',
-      'pm.exec.create'      => 'Eksekusi PM',
+      // // Preventive Maintenance
+      // 'pm.plans.index'      => 'Rencana PM',
+      // 'pm.plans.create'     => 'Tambah Rencana PM',
+      // 'pm.plans.edit'       => 'Ubah Rencana PM',
+      // 'pm.schedules.index'  => 'Jadwal PM',
+      // 'pm.schedules.create' => 'Tambah Jadwal PM',
+      // 'pm.schedules.edit'   => 'Ubah Jadwal PM',
+      // 'pm.exec.create'      => 'Eksekusi PM',
     ];
     $autoTitle = $defaultTitleMap[$routeName] ?? ($title ?? null);
     $pageTitle = trim($__env->yieldContent('page_title', $autoTitle));
@@ -290,11 +284,11 @@
 
       @if($isAdmin)
         {{-- WO tab --}}
-        <a href="{{ route('wo.index') }}"
+        {{-- <a href="{{ route('wo.index') }}"
            class="tab"
            aria-current="{{ request()->routeIs('wo.*') ? 'page' : 'false' }}">
           <span class="ic">🛠️</span><span class="tx">WO</span>
-        </a>
+        </a> --}}
 
         <a href="{{ route('reports.tickets') }}"
            class="tab"
@@ -303,12 +297,11 @@
         </a>
       @endif
 
-      <form method="POST" action="{{ route('logout') }}" class="tab p-0 m-0">
-        @csrf
-        <button class="tab" style="background:transparent;border:none" aria-label="Logout">
-          <span class="ic">🚪</span><span class="tx">Logout</span>
-        </button>
-      </form>
+        <a href="{{ route('profile.show') }}"
+           class="tab"
+           aria-current="{{ request()->routeIs('reports.tickets') ? 'page' : 'false' }}">
+          <span class="ic">👤</span><span class="tx">Akun</span>
+        </a>
     </nav>
   </div>
 </div>
@@ -339,7 +332,7 @@
   function closeDrawer(){ if(!drawer) return; drawer.classList.remove('active'); btnDrawer?.setAttribute('aria-expanded','false'); drawer.setAttribute('aria-hidden','true'); }
   btnDrawer?.addEventListener('click', () => drawer.classList.contains('active') ? closeDrawer() : openDrawer());
   drawer?.addEventListener('click', (e) => { if (e.target.matches('.backdrop,[data-close]')) closeDrawer(); });
-  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+  window.addEventListener('keydown', (e) => { if (e.key == 'Escape') closeDrawer(); });
 
   // Flash ok auto-hide
   const flash = document.querySelector('[data-flash="ok"]'); if (flash) setTimeout(()=>flash.remove(), 3000);
@@ -354,7 +347,7 @@
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;
           nw?.addEventListener('statechange', () => {
-            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            if (nw.state == 'installed' && navigator.serviceWorker.controller) {
               const bar = document.createElement('div');
               bar.className = 'fixed bottom-16 left-0 right-0 mx-auto max-w-xl bg-black text-white text-sm rounded-xl shadow p-3 z-50';
               bar.innerHTML = 'Versi baru tersedia. <button id="swRefresh" class="btn btn-brand" style="margin-left:.5rem">Muat ulang</button>';
@@ -369,7 +362,7 @@
   }
 
   // PWA Install FAB
-  function alreadyInstalled(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true; }
+  function alreadyInstalled(){ return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone == true; }
   function show(el){ el && el.classList.remove('hidden'); }
   function hide(el){ el && el.classList.add('hidden'); }
 
@@ -388,7 +381,7 @@
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const choice = await deferredPrompt.userChoice;
-      if (choice.outcome === 'accepted') hide(fabWrap);
+      if (choice.outcome == 'accepted') hide(fabWrap);
       deferredPrompt = null; return;
     }
     if (isIOS && isSafari) { show(iosBar); return; }

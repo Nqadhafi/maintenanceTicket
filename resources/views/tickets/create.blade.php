@@ -1,8 +1,15 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="bg-white p-4 rounded-xl shadow">
-  <form method="post" action="{{ route('tickets.store') }}">
+<div class="bg-white p-4 rounded-xl shadow relative">
+
+  {{-- ===== LOADING OVERLAY (halaman ini saja) ===== --}}
+  <div id="loadingOverlay" class="loading-overlay hidden" aria-hidden="true">
+    <div class="spinner" role="status" aria-label="Memproses..."></div>
+    <div class="loading-text">Memproses...</div>
+  </div>
+
+  <form method="post" action="{{ route('tickets.store') }}" class="js-block-on-submit">
     @csrf
     <div class="grid gap-3">
 
@@ -12,7 +19,7 @@
           <label class="block text-xs text-gray-600">Kategori</label>
           <select name="kategori" id="kategori" class="field w-full">
             @foreach($kategori as $k)
-              <option value="{{ $k }}" @selected(old('kategori')===$k)>{{ $k }}</option>
+              <option value="{{ $k }}" {{ (string)old('kategori') === (string)$k ? 'selected' : '' }}>{{ $k }}</option>
             @endforeach
           </select>
         </div>
@@ -20,7 +27,7 @@
           <label class="block text-xs text-gray-600">Urgensi</label>
           <select name="urgensi" class="field w-full">
             @foreach($urgensi as $u)
-              <option value="{{ $u }}" @selected(old('urgensi')===$u)>{{ $u }}</option>
+              <option value="{{ $u }}" {{ (string)old('urgensi') === (string)$u ? 'selected' : '' }}>{{ $u }}</option>
             @endforeach
           </select>
         </div>
@@ -31,7 +38,7 @@
         <div class="bar">
           <label class="block text-xs text-gray-600">Aset Terdaftar</label>
           <label class="inline-flex items-center text-sm">
-            <input type="checkbox" id="is_unlisted" name="is_asset_unlisted" value="1" class="mr-2" @checked(old('is_asset_unlisted'))> Aset belum terdaftar
+            <input type="checkbox" id="is_unlisted" name="is_asset_unlisted" value="1" class="mr-2" {{ old('is_asset_unlisted') ? 'checked' : '' }}> Aset belum terdaftar
           </label>
         </div>
 
@@ -104,25 +111,35 @@
 
       {{-- PJ --}}
       <div>
-        <label class="block text-xs text-gray-600">Penanggung Jawab (opsional, wajib untuk LAINNYA)</label>
-        <select name="assignee_id" class="field w-full">
-          <option value="">— Pilih PJ —</option>
+        <label for="assignee_id" class="block text-xs text-gray-600">
+          Penanggung Jawab <span class="text-gray-400">(opsional, wajib untuk LAINNYA)</span>
+        </label>
+
+        <select id="assignee_id" name="assignee_id" class="field w-full">
+          <option value=""
+            {{ (old('assignee_id') === null || old('assignee_id') === '') ? 'selected' : '' }}>
+            — Pilih PJ —
+          </option>
           @foreach($pjs as $u)
-            <option value="{{ $u->id }}" @selected(old('assignee_id')==$u->id)>{{ $u->name }} ({{ $u->divisi }})</option>
+            <option value="{{ $u->id }}"
+              {{ (string)old('assignee_id') === (string)$u->id ? 'selected' : '' }}>
+              {{ $u->name }} ({{ $u->divisi }})
+            </option>
           @endforeach
         </select>
       </div>
 
       <div>
-        <button class="btn btn-primary">Buat Tiket</button>
+        <button type="submit" class="btn btn-primary js-submit-btn">Buat Tiket</button>
       </div>
     </div>
   </form>
 </div>
 
-{{-- ===== JS: Dropdown aset dgn search (inner) + filter by kategori ===== --}}
+{{-- ===== JS: Dropdown aset dgn search (inner) + filter by kategori + Loading submit ===== --}}
 <script>
 (function(){
+  // ====== Logic aset dropdown & mode manual ======
   const kat = document.getElementById('kategori');
   const unlisted = document.getElementById('is_unlisted');
   const wrapManual = document.getElementById('asetManual');
@@ -148,7 +165,7 @@
   }
 
   function refreshMode(){
-    const isManual = unlisted.checked || kat.value === 'LAINNYA';
+    const isManual = (unlisted?.checked ?? false) || (kat?.value === 'LAINNYA');
     setManualMode(isManual);
   }
 
@@ -201,51 +218,91 @@
     emptyEl.classList.add('hidden');
     const frag = document.createDocumentFragment();
     items.forEach(it=>{
-      const btn = document.createElement('button');
-      btn.type='button';
-      btn.className='w-full text-left px-3 py-2 hover:bg-gray-50 rounded-lg';
-      btn.setAttribute('role','option');
-      btn.dataset.id = it.id;
-      btn.dataset.label = `${it.kode_aset ?? ''} — ${it.nama ?? ''}`;
-      btn.innerHTML = `
+      const b = document.createElement('button');
+      b.type='button';
+      b.className='w-full text-left px-3 py-2 hover:bg-gray-50 rounded-lg';
+      b.setAttribute('role','option');
+      b.dataset.id = it.id;
+      b.dataset.label = `${it.kode_aset ?? ''} — ${it.nama ?? ''}`;
+      b.innerHTML = `
         <div class="text-sm font-medium truncate">${it.kode_aset ?? ''} — ${it.nama ?? ''}</div>
         <div class="text-xs text-gray-500 truncate">${[it.kategori, it.lokasi, it.vendor].filter(Boolean).join(' • ')}</div>
       `;
-      frag.appendChild(btn);
+      frag.appendChild(b);
     });
     results.appendChild(frag);
   }
 
-  // Events
-  btn.addEventListener('click', ()=>{
-    if (panel.classList.contains('hidden')) openPanel(); else closePanel();
-  });
-
-  search.addEventListener('input', debounce((e)=>fetchAssets(e.target.value.trim()), 250));
-  search.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ e.preventDefault(); closePanel(); } });
-
-  results.addEventListener('click', (e)=>{
+  // Events dropdown
+  btn?.addEventListener('click', ()=> panel.classList.contains('hidden') ? openPanel() : closePanel());
+  search?.addEventListener('input', debounce((e)=>fetchAssets(e.target.value.trim()), 250));
+  search?.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ e.preventDefault(); closePanel(); } });
+  results?.addEventListener('click', (e)=>{
     const it = e.target.closest('[role="option"]');
     if (!it) return;
     setAsset(it.dataset.id, it.dataset.label);
     closePanel();
   });
+  document.addEventListener('click', (e)=>{ if (!e.target.closest('#assetDropdown')) closePanel(); });
 
-  document.addEventListener('click', (e)=>{
-    if (!e.target.closest('#assetDropdown')) closePanel();
-  });
-
-  kat.addEventListener('change', ()=>{
-    // reset bila kategori berubah
+  kat?.addEventListener('change', ()=>{
     setAsset('', '— Pilih aset —');
     closePanel();
     refreshMode();
   });
-
-  unlisted.addEventListener('change', refreshMode);
-
-  // init
+  unlisted?.addEventListener('change', refreshMode);
   refreshMode();
+
+  // ====== Loading submit (tanpa disable field, cegah double submit) ======
+  const form = document.querySelector('form.js-block-on-submit');
+  const overlay = document.getElementById('loadingOverlay');
+
+  function blockForm(){
+    if (form.dataset.submitting === '1') return; // prevent double
+    form.dataset.submitting = '1';
+
+    // Disable hanya tombol submit
+    form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach(btn => {
+      btn.disabled = true;
+      btn.dataset.prevText = btn.innerHTML;
+      btn.innerHTML = 'Membuat…';
+    });
+
+    // Blok interaksi tanpa disable field agar value tetap terkirim
+    form.classList.add('form-blocked');
+
+    // Tampilkan overlay
+    if (overlay){
+      overlay.classList.remove('hidden');
+      overlay.setAttribute('aria-hidden','false');
+    }
+  }
+
+  form?.addEventListener('submit', ()=>{
+    blockForm();
+  });
+
 })();
 </script>
+
+{{-- ===== Styles: Overlay & Form Block ===== --}}
+<style>
+  .loading-overlay{
+    position:absolute; inset:0; background:rgba(0,0,0,.35);
+    display:flex; align-items:center; justify-content:center; flex-direction:column;
+    border-radius:12px; z-index:20;
+  }
+  .loading-overlay.hidden{ display:none; }
+  .spinner{
+    width:42px; height:42px; border-radius:9999px;
+    border:4px solid #fff; border-top-color:transparent;
+    animation:spin .8s linear infinite;
+  }
+  .loading-text{ margin-top:.5rem; color:#fff; font-weight:600 }
+  @keyframes spin{ to{ transform:rotate(360deg) } }
+
+  /* Cegah interaksi tanpa mematikan field (value tetap terkirim) */
+  .form-blocked{ pointer-events: none; opacity: .85; }
+  .form-blocked :where(button,[type="submit"]){ pointer-events:auto; } /* biar hover tombol tetap normal */
+</style>
 @endsection

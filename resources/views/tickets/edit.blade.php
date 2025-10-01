@@ -126,16 +126,27 @@
       </div>
 
       {{-- PJ --}}
-      <div>
-        <label class="block text-xs text-gray-600">Penanggung Jawab (opsional, wajib untuk LAINNYA)</label>
-        <select name="assignee_id" class="border rounded-lg p-2 w-full">
-          <option value="">— Pilih PJ —</option>
-          @foreach($pjs as $u)
-            <option value="{{ $u->id }}" {{ old('assignee_id', $ticket->assignee_id) == $u->id ? 'selected' : '' }}>{{ $u->name }} ({{ $u->divisi }})</option>
-          @endforeach
-        </select>
-        @include('partials.field-error', ['field' => 'assignee_id'])
-      </div>
+<div>
+  <label for="assignee_id" class="block text-xs text-gray-600">
+    Penanggung Jawab <span class="text-gray-400">(opsional, wajib untuk LAINNYA)</span>
+  </label>
+
+  <select id="assignee_id" name="assignee_id" class="field w-full">
+    @php $selectedAssignee = (string)old('assignee_id', $ticket->assignee_id ?? ''); @endphp
+
+    <option value="" {{ $selectedAssignee === '' ? 'selected' : '' }}>
+      — Pilih PJ —
+    </option>
+
+    @foreach($pjs as $u)
+      <option value="{{ $u->id }}"
+        {{ $selectedAssignee === (string)$u->id ? 'selected' : '' }}>
+        {{ $u->name }} ({{ $u->divisi }})
+      </option>
+    @endforeach
+  </select>
+</div>
+
 
       <div class="flex gap-2">
         <button class="px-4 py-2 rounded-lg bg-black text-white text-sm">Simpan Perubahan</button>
