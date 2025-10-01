@@ -18,7 +18,7 @@
 @endphp
 
 {{-- ===== MOBILE APP-LIKE HEADER (padat) ===== --}}
-<div class="md:hidden space-y-3">
+<div class="md:hidden space-y-3 p-3">
   <div class="app-hero p-3 rounded-xl border bg-white">
     <div class="flex items-center justify-between">
       <div class="min-w-0">
@@ -39,6 +39,11 @@
         <div class="k">{{ $cards[1]['title'] ?? 'Lewat Deadline' }}</div>
         <div class="v">{{ $cards[1]['value'] ?? 0 }}</div>
       </a>
+    </div>
+
+    {{-- Tombol panduan (mobile) --}}
+    <div class="mt-2">
+      <button class="btn btn-outline w-full text-sm" data-open-guide>Panduan Deadline</button>
     </div>
   </div>
 
@@ -69,13 +74,16 @@
         <div class="text-lg font-semibold">Ringkasan Hari Ini</div>
         <div class="text-sm text-gray-500">Lihat sekilas kondisi tiket dan lakukan tindakan penting.</div>
       </div>
-      @if(!empty($quick))
-        <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2">
+        {{-- Quick actions dari server (jika ada) --}}
+        @if(!empty($quick))
           @foreach($quick as $q)
             <a href="{{ $q['route'] }}" class="btn {{ $q['style'] }}">{{ $q['label'] }}</a>
           @endforeach
-        </div>
-      @endif
+        @endif
+        {{-- Tombol panduan (desktop) --}}
+        <button class="btn btn-outline text-sm" data-open-guide>Panduan Deadline</button>
+      </div>
     </div>
   </div>
 
@@ -280,8 +288,116 @@
   </div>
 </div>
 
-{{-- ===== Script Modal ===== --}}
+
+{{-- ===== Guide Modal: Panduan Penggunaan (centered & eye-catching) ===== --}}
+<div id="guideModal" class="fixed inset-0 hidden z-[60]" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Panduan Penggunaan">
+  {{-- Backdrop --}}
+  <div class="absolute inset-0 bg-black/40" data-close></div>
+
+  {{-- Wrapper untuk center modal --}}
+  <div class="relative z-10 min-h-screen w-full flex items-center justify-center p-4 ">
+    <div class="w-full max-w-xl md:max-w-2xl bg-white rounded-2xl shadow-2xl border overflow-hidden animate-in ">
+      {{-- Header --}}
+      <div class="px-5 md:px-6 py-4 md:py-5 border-b flex items-start justify-between gap-3 ">
+        <div class="min-w-0 flex items-center gap-3">
+          <div class="text-2xl md:text-3xl">📘</div>
+          <div>
+            <div class="text-[11px] text-gray-500 uppercase tracking-wide">Panduan</div>
+            <h2 class="text-lg md:text-xl font-semibold leading-snug">Panduan Penggunaan Aplikasi</h2>
+          </div>
+        </div>
+        <button class="btn btn-outline" data-close aria-label="Tutup">✕</button>
+      </div>
+
+      {{-- Body --}}
+      <div class="p-5 md:p-6 space-y-6 text-sm md:text-[15px] leading-relaxed">
+        {{-- Pengoperasian --}}
+        <section class="space-y-3 p-4">
+          <div class="flex items-center gap-2">
+            <div class="text-xl">🛠️</div>
+            <h3 class="font-semibold text-base md:text-[17px]">Pengoperasian</h3>
+          </div>
+          <ol class="list-decimal pl-5 space-y-2">
+            <li><b>Buat tiket</b> — isi kategori, urgensi, aset/objek, judul & deskripsi.</li>
+            <li><b>Tunggu penanggung jawab memproses</b> — tiket di-assign & status berubah.</li>
+            <li><b>Menerima tindakan</b> — PJ mengerjakan; update komentar/lampiran bila perlu.</li>
+            <li><b>Close ticket</b> — setelah solusi diterapkan & dikonfirmasi, tiket ditutup.</li>
+          </ol>
+        </section>
+        {{-- Deadline / SLA --}}
+        <section class="space-y-3 p-4">
+          <div class="flex items-center gap-2">
+            <div class="text-xl">⏱️</div>
+            <h3 class="font-semibold text-base md:text-[17px]">Deadline</h3>
+          </div>
+          <ul class="space-y-2">
+            <li class="flex items-start gap-2">
+              <span>🟢</span>
+              <p><b>Rendah</b> — Tidak menyebabkan gangguan produksi <span class="text-gray-600">(est. 5–30 hari)</span></p>
+            </li>
+            <li class="flex items-start gap-2">
+              <span>🟡</span>
+              <p><b>Sedang</b> — Berpotensi menyebabkan gangguan produksi <span class="text-gray-600">(est. 2–5 hari)</span></p>
+            </li>
+            <li class="flex items-start gap-2">
+              <span>🔴</span>
+              <p><b>Tinggi/Darurat</b> — Menyebabkan produksi terhenti <span class="text-gray-600">(est. 1–2 hari)</span></p>
+            </li>
+          </ul>
+          <div class="rounded-xl border border-blue-200 bg-blue-50 text-blue-900 p-3 text-[13px] md:text-sm">
+            💡 <b>Tips:</b> Pantau <i>Overdue</i> & <i>Due Today</i> dari menu Laporan untuk prioritas harian.
+          </div>
+        </section>
+        {{-- Status --}}
+        <section class="space-y-3 p-4 mt-2">
+          <div class="flex items-center gap-2">
+            <div class="text-xl">🔁</div>
+            <h3 class="font-semibold text-base md:text-[17px]">Status</h3>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-2">
+            <div class="flex items-start gap-2"><span>🆕</span><p><b>OPEN</b> — tiket baru, belum ada penanggung jawab.</p></div>
+            <div class="flex items-start gap-2"><span>👤</span><p><b>ASSIGNED</b> — sudah ditetapkan penanggung jawab.</p></div>
+            <div class="flex items-start gap-2"><span>🛠️</span><p><b>IN_PROGRESS</b> — sedang dikerjakan.</p></div>
+            <div class="flex items-start gap-2"><span>⏸️</span><p><b>PENDING</b> — tertunda (menunggu konfirmasi/parts/vendor/akses).</p></div>
+            <div class="flex items-start gap-2"><span>✅</span><p><b>RESOLVED</b> — solusi diterapkan, menunggu konfirmasi pelapor.</p></div>
+            <div class="flex items-start gap-2"><span>🏁</span><p><b>CLOSED</b> — tiket selesai/ditutup.</p></div>
+          </div>
+        </section>
+
+
+      </div>
+
+      {{-- Footer --}}
+      <div class="px-3 md:px-5 py-4 md:py-5 border-t flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
+        <label class="inline-flex items-center text-sm sm:mr-auto">
+          <input type="checkbox" id="chkDontShow" class="mr-2"> Jangan tampilkan lagi di perangkat ini
+        </label>
+        <div class="flex gap-2 sm:ml-auto">
+          <button class="btn btn-outline" data-close>Oke, mengerti</button>
+          <button id="btnSaveGuidePref" class="btn btn-primary">Simpan & Tutup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{{-- ===== SCRIPTS ===== --}}
 <script>
+/* ========== Modal Lock Global (hindari tabrakan scroll antar modal) ========== */
+(function(w, d){
+  const key='__modalLockCount';
+  if(!w.modalLock){
+    w[key]=0;
+    w.modalLock={
+      lock(){ w[key]=(w[key]||0)+1; d.body.classList.add('modal-open'); },
+      unlock(){ w[key]=Math.max((w[key]||0)-1,0); if(w[key]===0) d.body.classList.remove('modal-open'); },
+      isOpen(){ return (w[key]||0)>0; }
+    };
+  }
+})(window, document);
+
+/* ========== Ticket Modal (script awalmU, dipatch pakai modalLock) ========== */
 (function(){
   const modal = document.getElementById('ticketModal');
   if (!modal) return;
@@ -311,12 +427,12 @@
     modal.classList.remove('hidden');
     modal.setAttribute('aria-hidden','false');
     detailLink?.focus();
-    document.body.style.overflow = 'hidden';
+    window.modalLock?.lock(); // gunakan lock global
   }
   function closeModal(){
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden','true');
-    document.body.style.overflow = '';
+    window.modalLock?.unlock(); // lepas lock global
   }
 
   // Delegasi klik pada row
@@ -371,5 +487,82 @@
     if (!modal.classList.contains('hidden') && e.key === 'Escape') closeModal();
   });
 })();
+
+/* ========== Guide Modal (auto show sekali per user, pakai modalLock) ========== */
+(function(){
+  const modal = document.getElementById('guideModal');
+  if(!modal) return;
+
+  const openBtns = document.querySelectorAll('[data-open-guide]');
+  const closeBtns = modal.querySelectorAll('[data-close]');
+  const saveBtn   = document.getElementById('btnSaveGuidePref');
+  const dontShow  = document.getElementById('chkDontShow');
+
+  const userId = "{{ (string)auth()->id() }}";
+  const LS_KEY = `sp_guide_deadline_seen:v1:${userId}`;
+
+  function openGuide(){
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden','false');
+    window.modalLock?.lock();
+  }
+  function closeGuide(){
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden','true');
+    window.modalLock?.unlock();
+  }
+
+  // Auto-open pada first visit setelah login (jika belum disimpan preferensinya)
+  try {
+    const seen = localStorage.getItem(LS_KEY);
+    if(!seen){
+      openGuide();
+    }
+  } catch(_) {}
+
+  // Tombol pembuka manual
+  openBtns.forEach(b => b.addEventListener('click', openGuide));
+
+  // Tutup tanpa simpan preferensi
+  closeBtns.forEach(b => b.addEventListener('click', closeGuide));
+
+  // Simpan preferensi (jangan tampilkan lagi)
+  saveBtn?.addEventListener('click', ()=>{
+    if(dontShow?.checked){
+      try { localStorage.setItem(LS_KEY, '1'); } catch(_){}
+    }
+    closeGuide();
+  });
+
+  // Klik backdrop
+  modal.addEventListener('click', (e)=>{
+    if (e.target.matches('.bg-black\\/40,[data-close]')) closeGuide();
+  });
+
+  // ESC
+  window.addEventListener('keydown', (e)=>{
+    if (!modal.classList.contains('hidden') && e.key === 'Escape') closeGuide();
+  });
+})();
 </script>
+
+<style>
+/* Modal lock class (global) */
+body.modal-open { overflow: hidden; }
+
+/* Sedikit penyesuaian visual untuk modal panduan */
+#guideModal .max-w-2xl{ margin-top: 4rem; }
+@media (max-width: 640px){
+  #guideModal .max-w-2xl{ margin-top: 3rem; }
+}
+#guideModal .animate-in {
+  animation: gmodal-in 160ms ease-out both;
+  transform-origin: center;
+}
+@keyframes gmodal-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+</style>
 @endsection
