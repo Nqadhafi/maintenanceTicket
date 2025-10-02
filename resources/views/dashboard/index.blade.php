@@ -296,7 +296,7 @@
 
   {{-- Wrapper untuk center modal --}}
   <div class="relative z-10 min-h-screen w-full flex items-center justify-center p-4 ">
-    <div class="w-full max-w-xl md:max-w-2xl bg-white rounded-2xl shadow-2xl border overflow-hidden animate-in ">
+    <div class="w-full max-w-xl md:max-w-2xl bg-white rounded-2xl shadow-2xl border overflow-auto animate-in " style="max-height: 75vh;">
       {{-- Header --}}
       <div class="px-5 md:px-6 py-4 md:py-5 border-b flex items-start justify-between gap-3 ">
         <div class="min-w-0 flex items-center gap-3">
