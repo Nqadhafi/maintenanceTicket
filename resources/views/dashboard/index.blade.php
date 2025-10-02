@@ -119,96 +119,112 @@
       <a class="btn btn-outline mt-2" href="{{ route('tickets.create') }}">Buat Tiket</a>
     </div>
   @else
-    <div class="stack">
-      @foreach($recent as $t)
-        @php
-          $overdue = $t->sla_due_at && $t->sla_due_at->isPast() && !in_array($t->status, ['RESOLVED','CLOSED']);
-          $toneRow = 'info';
-          if ($overdue) $toneRow = 'danger';
-          elseif ($t->sla_due_at && $t->sla_due_at->isToday() && !in_array($t->status,['RESOLVED','CLOSED'])) $toneRow = 'warn';
-          elseif (in_array($t->status, ['RESOLVED','CLOSED'])) $toneRow = 'ok';
+ <div class="stack">
+  @foreach($recent as $t)
+    @php
+      $overdue = $t->sla_due_at && $t->sla_due_at->isPast() && !in_array($t->status, ['RESOLVED','CLOSED']);
+      $toneRow = 'info';
+      if ($overdue) $toneRow = 'danger';
+      elseif ($t->sla_due_at && $t->sla_due_at->isToday() && !in_array($t->status,['RESOLVED','CLOSED'])) $toneRow = 'warn';
+      elseif (in_array($t->status, ['RESOLVED','CLOSED'])) $toneRow = 'ok';
 
-          $deadlineStr = $t->sla_due_at ? $fmtIdDate($t->sla_due_at) : '—';
-          $createdStr  = $t->created_at ? $fmtIdDate($t->created_at) : '—';
-          $urlShow     = route('tickets.show', $t->id);
+      $deadlineStr = $t->sla_due_at ? $fmtIdDate($t->sla_due_at) : '—';
+      $createdStr  = $t->created_at ? $fmtIdDate($t->created_at) : '—';
+      $urlShow     = route('tickets.show', $t->id);
 
-          // Aset
-          $asset       = optional($t->asset);
-          $assetName   = $asset->nama ?? $asset->name ?? '';
-          $assetTag    = $asset->kode_aset ?? '';
-          $assetLoc    = optional($asset->location)->nama ?? optional($asset->location)->name ?? '';
-          $assetVendor = optional($asset->vendor)->nama   ?? optional($asset->vendor)->name   ?? '';
-          $assetCat    = optional($asset->category)->nama ?? optional($asset->category)->name ?? '';
+      $asset       = optional($t->asset);
+      $assetName   = $asset->nama ?? $asset->name ?? '';
+      $assetTag    = $asset->kode_aset ?? '';
+      $assetLoc    = optional($asset->location)->nama ?? optional($asset->location)->name ?? '';
+      $assetVendor = optional($asset->vendor)->nama   ?? optional($asset->vendor)->name   ?? '';
+      $assetCat    = optional($asset->category)->nama ?? optional($asset->category)->name ?? '';
 
-          // Pelapor
-          $pelaporName = optional($t->pelapor)->name ?? '';
-        @endphp
+      $pelaporName = optional($t->pelapor)->name ?? '';
 
-        <div
-          class="border rounded-xl p-3 row-accent {{ $toneRow }} cursor-pointer js-ticket-row"
-          tabindex="0"
-          role="button"
-          aria-label="Buka ringkas tiket {{ $t->kode_tiket }}"
-          data-url="{{ $urlShow }}"
-          data-kode="{{ $t->kode_tiket }}"
-          data-judul="{{ $t->judul }}"
-          data-deadline="{{ $deadlineStr }}"
-          data-overdue="{{ $overdue ? '1':'0' }}"
-          data-kategori="{{ $t->kategori }}"
-          data-urgensi="{{ $t->urgensi }}"
-          data-status="{{ $t->status }}"
-          data-divisi="{{ $t->divisi_pj ?? '' }}"
-          data-pj="{{ optional($t->assignee)->name ?? '' }}"
-          data-pelapor="{{ $pelaporName }}"
-          data-created="{{ $createdStr }}"
-          data-asset-name="{{ $assetName }}"
-          data-asset-tag="{{ $assetTag }}"
-          data-asset-loc="{{ $assetLoc }}"
-          data-asset-vendor="{{ $assetVendor }}"
-          data-asset-cat="{{ $assetCat }}"
-        >
-          {{-- HEADER ROW: kode + status/urgensi kanan (mobile padat) --}}
-          <div class="flex items-start justify-between gap-2">
-            <div class="min-w-0">
-              <div class="text-sm font-medium truncate">
-                @if($assetName)
-                  <span class="text-gray-700 hidden sm:inline">{{ $assetName }}</span>
-                  <span class="text-gray-400 hidden sm:inline">•</span>
-                @endif
-                <span class="underline">{{ $t->kode_tiket }}</span>
-              </div>
-              <div class="text-[13px] text-gray-600 line-clamp-2 sm:line-clamp-1">{{ $t->judul }}</div>
-            </div>
-            <div class="flex items-center gap-1 shrink-0">
-              <span class="chip st-{{ $t->status }} text-[11px] py-0.5">{{ $t->status }}</span>
-              <span class="chip ug-{{ $t->urgensi }} text-[11px] py-0.5">{{ $t->urgensi }}</span>
-            </div>
-          </div>
+      // warna ribbon urgensi
+      $urgRibbon = match($t->urgensi) {
+        'RENDAH'  => 'bg-green-600',
+        'SEDANG'  => 'bg-yellow-500',
+        'TINGGI'  => 'bg-orange-600',
+        'DARURAT' => 'bg-red-600',
+        default   => 'bg-gray-500'
+      };
+    @endphp
 
-          {{-- META ROW: Pelapor & Deadline (info inti) --}}
-          <div class="mt-2 flex items-center justify-between gap-2">
-            <div class="text-[12px] text-gray-600">
-              @if($pelaporName) <span>Pelapor: {{ $pelaporName }}</span> @else <span>Pelapor: —</span> @endif
-            </div>
-            <div class="text-[12px] {{ $overdue ? 'text-red-600' : 'text-gray-500' }}">
-              Deadline: {{ $deadlineStr }} @if($overdue) • lewat @endif
-            </div>
-          </div>
+    <div
+      class="relative overflow-hidden border rounded-xl p-3 row-accent {{ $toneRow }} cursor-pointer js-ticket-row"
+      tabindex="0"
+      role="button"
+      aria-label="Buka ringkas tiket {{ $t->kode_tiket }}"
+      data-url="{{ $urlShow }}"
+      data-kode="{{ $t->kode_tiket }}"
+      data-judul="{{ $t->judul }}"
+      data-deadline="{{ $deadlineStr }}"
+      data-overdue="{{ $overdue ? '1':'0' }}"
+      data-kategori="{{ $t->kategori }}"
+      data-urgensi="{{ $t->urgensi }}"
+      data-status="{{ $t->status }}"
+      data-divisi="{{ $t->divisi_pj ?? '' }}"
+      data-pj="{{ optional($t->assignee)->name ?? '' }}"
+      data-pelapor="{{ $pelaporName }}"
+      data-created="{{ $createdStr }}"
+      data-asset-name="{{ $assetName }}"
+      data-asset-tag="{{ $assetTag }}"
+      data-asset-loc="{{ $assetLoc }}"
+      data-asset-vendor="{{ $assetVendor }}"
+      data-asset-cat="{{ $assetCat }}"
+    >
+      {{-- Ribbon urgensi di pojok kanan atas --}}
+      <div class="ribbon {{ $urgRibbon }}">
+        <span class="ribbon-text">{{ $t->urgensi }}</span>
+      </div>
 
-          {{-- CHIPS SEKUNDER: sembunyikan di mobile --}}
-          <div class="mt-2 hidden md:flex items-center gap-2 flex-wrap">
-            <span class="chip">{{ $t->kategori }}</span>
-            @if($t->assignee) <span class="chip">PJ: {{ $t->assignee->name }}</span> @endif
-            @if($t->divisi_pj) <span class="chip">Divisi: {{ $t->divisi_pj }}</span> @endif
+      {{-- HEADER ROW: info kiri + status besar kanan --}}
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="text-sm font-medium truncate">
             @if($assetName)
-              <span class="chip">Aset: {{ $assetName }}</span>
-            @elseif($assetTag)
-              <span class="chip tone-muted">Aset: {{ $assetTag }}</span>
+              <span class="text-gray-700 hidden sm:inline">{{ $assetName }}</span>
+              <span class="text-gray-400 hidden sm:inline">•</span>
             @endif
+            <span class="underline">{{ $t->kode_tiket }}</span>
+          </div>
+          <div class="text-[13px] text-gray-600 line-clamp-2 sm:line-clamp-1">{{ $t->judul }}</div>
+        </div>
+
+        {{-- STATUS besar & mencolok --}}
+        <div class="shrink-0 text-right p-3">
+          <div class="status-badge-lg st-{{ $t->status }}">
+            {{ $t->status }}
           </div>
         </div>
-      @endforeach
+      </div>
+
+      {{-- META ROW: Pelapor & Deadline --}}
+      <div class="mt-2 flex items-center justify-between gap-2">
+        <div class="text-[12px] text-gray-600">
+          @if($pelaporName) <span>Pelapor: {{ $pelaporName }}</span> @else <span>Pelapor: —</span> @endif
+        </div>
+        <div class="text-[12px] {{ $overdue ? 'text-red-600' : 'text-gray-500' }}">
+          Deadline: {{ $deadlineStr }} @if($overdue) • lewat @endif
+        </div>
+      </div>
+
+      {{-- CHIP sekunder (desktop) --}}
+      <div class="mt-2 hidden md:flex items-center gap-2 flex-wrap">
+        <span class="chip">{{ $t->kategori }}</span>
+        @if($t->assignee) <span class="chip">PJ: {{ $t->assignee->name }}</span> @endif
+        @if($t->divisi_pj) <span class="chip">Divisi: {{ $t->divisi_pj }}</span> @endif
+        @if($assetName)
+          <span class="chip">Aset: {{ $assetName }}</span>
+        @elseif($assetTag)
+          <span class="chip tone-muted">Aset: {{ $assetTag }}</span>
+        @endif
+      </div>
     </div>
+  @endforeach
+</div>
+
   @endif
 </div>
 
@@ -563,6 +579,55 @@ body.modal-open { overflow: hidden; }
   from { opacity: 0; transform: translateY(6px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
+.status-badge-lg{
+  display:inline-block;
+  padding: .35rem .65rem;
+  font-weight: 700;
+  font-size: .80rem;        /* mobile */
+  line-height: 1;
+  border-radius: .75rem;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+@media (min-width: 640px){
+  .status-badge-lg{ font-size: .9rem; padding:.45rem .8rem; }
+}
 
+/* contoh warna dasar bila belum ada kelas st-* */
+.st-OPEN{ background:#E0F2FE; color:#075985; }
+.st-ASSIGNED{ background:#EDE9FE; color:#5B21B6; }
+.st-IN_PROGRESS{ background:#FEF3C7; color:#92400E; }
+.st-PENDING{ background:#F3F4F6; color:#374151; }
+.st-RESOLVED{ background:#DCFCE7; color:#166534; }
+.st-CLOSED{ background:#F5F5F5; color:#44403C; }
+
+/* RIBBON urgensi pojok kanan-atas */
+.ribbon{
+  position:absolute;
+  top:1px;
+  right:-30px;          /* geser keluar sedikit biar diagonalnya pas */
+  transform: rotate(45deg);
+  padding: 5px 30px;    /* lebar diagonal */
+  color:#fff;
+  box-shadow: 0 4px 10px rgba(0,0,0,.12);
+  z-index: 1;
+}
+.ribbon .ribbon-text{
+  font-size: .70rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display:inline-block;
+}
+
+/* warna ribbon kalau belum ada mapping dari PHP */
+.bg-green-600{ background-color:#16a34a; }
+.bg-yellow-500{ background-color:#eab308; }
+.bg-orange-600{ background-color:#ea580c; }
+.bg-red-600{ background-color:#dc2626; }
+
+/* Pastikan konten card tidak ketiban ribbon */
+.row-accent{ position:relative; }
 </style>
 @endsection
